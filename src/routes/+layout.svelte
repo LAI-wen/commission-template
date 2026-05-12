@@ -112,10 +112,15 @@
     transform: translate(-1px, -1px);
     box-shadow: var(--shadow-md);
   }
+  :global(.btn-secondary:active) {
+    transform: translate(2px, 2px);
+    box-shadow: none;
+  }
 
   :global(.btn-danger) {
     display: inline-flex;
     align-items: center;
+    gap: 0.4rem;
     padding: 0.5rem 1.2rem;
     background: var(--red);
     color: var(--white);
@@ -125,11 +130,16 @@
     font-weight: 700;
     font-size: 0.85rem;
     cursor: pointer;
+    text-decoration: none;
     transition: transform 0.08s, box-shadow 0.08s;
   }
   :global(.btn-danger:hover) {
     transform: translate(-1px, -1px);
     box-shadow: var(--shadow-md);
+  }
+  :global(.btn-danger:active) {
+    transform: translate(2px, 2px);
+    box-shadow: none;
   }
 
   :global(.card-acs) {
