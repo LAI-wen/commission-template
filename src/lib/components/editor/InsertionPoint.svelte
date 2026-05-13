@@ -27,13 +27,11 @@
     transition: opacity 0.2s;
     position: relative;
     z-index: 20;
-    pointer-events: none;
   }
 
   .insertion-point:hover,
   .insertion-point.visible {
     opacity: 1;
-    pointer-events: auto;
   }
 
   /* Horizontal dashed line */

@@ -112,7 +112,7 @@
 <style>
   .overlay {
     position: fixed; inset: 0;
-    background: rgba(21, 22, 45, 0.55);
+    background: color-mix(in srgb, var(--ink) 55%, transparent);
     backdrop-filter: blur(2px);
     z-index: 1000;
   }

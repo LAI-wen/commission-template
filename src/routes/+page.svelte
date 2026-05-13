@@ -737,7 +737,7 @@
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: rgba(21, 22, 45, 0.7);
+  background: color-mix(in srgb, var(--ink) 70%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -866,7 +866,7 @@
   gap: 8px;
   padding: 12px;
   border: 1px solid var(--color-border-tertiary);
-  background: #f9f9f9;
+  background: var(--color-background-secondary);
 }
 .checkbox-label {
   display: flex;
