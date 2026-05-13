@@ -49,76 +49,112 @@
   <title>{type.name} · {creator?.display_name}</title>
 </svelte:head>
 
-<main class="container">
-  <a href="/commission" class="back">← 委託說明</a>
-  <h1>{type.name}</h1>
-  {#if type.description}
-    <p class="desc">{type.description}</p>
-  {/if}
+<main class="page">
+  <div class="page-header">
+    <nav class="breadcrumb">
+      <a href="/commission">委託說明</a>
+      <span>›</span>
+      <span>{type.name}</span>
+    </nav>
+    <h1 class="type-title">{type.name}</h1>
+    {#if type.description}
+      <p class="type-desc">{type.description}</p>
+    {/if}
+  </div>
 
-  <!-- 估價器 -->
-  <section class="estimator">
-    <h2>估價</h2>
+  <div class="content-grid">
+    <!-- 左欄：選項 -->
+    <div>
+      {#if addOptions.length > 0}
+        <div class="section-block">
+          <div class="section-block-header">加購選項</div>
+          <div class="section-block-body">
+            <div class="option-group">
+              <span class="option-label">選擇加購項目</span>
+              {#each addOptions as opt}
+                <label class="option-item">
+                  <input
+                    type="checkbox"
+                    checked={selected.has((opt as any).id)}
+                    onchange={() => toggle((opt as any).id)}
+                  />
+                  <span>{(opt as any).label}</span>
+                  <span class="option-price">
+                    +NT$ {(opt as any).price_delta.toLocaleString()}
+                  </span>
+                </label>
+              {/each}
+            </div>
+          </div>
+        </div>
+      {/if}
 
-    <div class="price-row base">
-      <span>基本價格</span>
-      <span>NT$ {type.base_price.toLocaleString()}</span>
+      {#if multiplyOptions.length > 0}
+        <div class="section-block">
+          <div class="section-block-header">角色數 / 倍率</div>
+          <div class="section-block-body">
+            <div class="option-group">
+              <span class="option-label">選擇角色數</span>
+              {#each multiplyOptions as opt}
+                <label class="option-item">
+                  <input
+                    type="radio"
+                    name="multiply"
+                    value={(opt as any).id}
+                    bind:group={selectedMultiply}
+                  />
+                  <span>{(opt as any).label}</span>
+                  <span class="option-price">×{(opt as any).price_multiplier}</span>
+                </label>
+              {/each}
+            </div>
+          </div>
+        </div>
+      {/if}
     </div>
 
-    {#if addOptions.length > 0}
-      <div class="option-group">
-        <p class="option-label">加購選項</p>
-        {#each addOptions as opt}
-          <label class="option-row">
-            <input
-              type="checkbox"
-              checked={selected.has((opt as any).id)}
-              onchange={() => toggle((opt as any).id)}
-            />
-            <span class="opt-name">{(opt as any).label}</span>
-            <span class="opt-price">
-              +NT$ {(opt as any).price_delta.toLocaleString()}
-            </span>
-          </label>
-        {/each}
+    <!-- 右欄：估價卡 -->
+    <div class="price-card">
+      <div class="price-card-header">估價</div>
+      <div class="price-card-body">
+        <span class="price-total">NT$ {estimatedPrice.toLocaleString()}</span>
+        <div class="price-breakdown">
+          <div class="breakdown-row">
+            <span>基本價格</span>
+            <span>NT$ {type.base_price.toLocaleString()}</span>
+          </div>
+          {#each addOptions as opt}
+            {#if selected.has((opt as any).id)}
+              <div class="breakdown-row">
+                <span>{(opt as any).label}</span>
+                <span>+NT$ {(opt as any).price_delta.toLocaleString()}</span>
+              </div>
+            {/if}
+          {/each}
+          {#if selectedMultiply}
+            {#each multiplyOptions as opt}
+              {#if (opt as any).id === selectedMultiply}
+                <div class="breakdown-row">
+                  <span>{(opt as any).label}</span>
+                  <span>×{(opt as any).price_multiplier}</span>
+                </div>
+              {/if}
+            {/each}
+          {/if}
+        </div>
+        {#if isOpen}
+          <a
+            href="/apply?type={type.id}&price={estimatedPrice}&options={encodeURIComponent(selectedOptionsJson)}"
+            class="apply-link"
+          >
+            以此項目申請委託
+          </a>
+        {:else}
+          <div>目前暫停委託中</div>
+        {/if}
       </div>
-    {/if}
-
-    {#if multiplyOptions.length > 0}
-      <div class="option-group">
-        <p class="option-label">角色數 / 倍率</p>
-        {#each multiplyOptions as opt}
-          <label class="option-row">
-            <input
-              type="radio"
-              name="multiply"
-              value={(opt as any).id}
-              bind:group={selectedMultiply}
-            />
-            <span class="opt-name">{(opt as any).label}</span>
-            <span class="opt-price">×{(opt as any).price_multiplier}</span>
-          </label>
-        {/each}
-      </div>
-    {/if}
-
-    <div class="price-total">
-      <span>預估金額</span>
-      <span class="total-price">NT$ {estimatedPrice.toLocaleString()}</span>
     </div>
-    <p class="price-note">實際金額以繪師確認為準</p>
-  </section>
-
-  {#if isOpen}
-    <a
-      href="/apply?type={type.id}&price={estimatedPrice}&options={encodeURIComponent(selectedOptionsJson)}"
-      class="btn-apply"
-    >
-      以此項目申請委託
-    </a>
-  {:else}
-    <div class="closed-note">目前暫停委託中</div>
-  {/if}
+  </div>
 </main>
 
 <style>

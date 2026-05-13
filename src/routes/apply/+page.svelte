@@ -28,96 +28,127 @@
   <title>申請委託</title>
 </svelte:head>
 
-<main class="container">
-  <a href="/commission" class="back">← 委託說明</a>
-  <h1>申請委託</h1>
+<main class="page">
+  <div class="page-header">
+    <h1 class="page-title">申請委託</h1>
+    <p class="page-subtitle">填寫以下資料，送出後等待繪師確認</p>
+  </div>
 
-  <form method="POST">
-    <!-- 防機器人 honeypot（隱藏） -->
-    <input type="text" name="honeypot" style="display:none" tabindex="-1" autocomplete="off" />
+  <div class="form-grid">
+    <form method="POST">
+      <!-- 防機器人 honeypot（隱藏） -->
+      <div class="honeypot">
+        <input type="text" name="honeypot" tabindex="-1" autocomplete="off" />
+      </div>
 
-    <!-- 委託項目 -->
-    <div class="field">
-      <label for="type_id">委託項目 *</label>
-      <select
-        id="type_id"
-        name="type_id"
-        value={selectedTypeId}
-        onchange={onTypeChange}
-        required
-      >
-        <option value="">請選擇</option>
-        {#each types as type}
-          <option value={type.id}>{type.name}（NT$ {type.base_price.toLocaleString()} 起）</option>
-        {/each}
-      </select>
-      {#if errors.type_id}
-        <span class="error">{errors.type_id[0]}</span>
-      {/if}
-    </div>
+      <!-- 委託項目 -->
+      <div class="form-section">
+        <div class="form-section-title">委託項目</div>
+        <div class="field" class:has-error={!!errors.type_id}>
+          <label for="type_id">委託項目 *</label>
+          <select
+            id="type_id"
+            name="type_id"
+            value={selectedTypeId}
+            onchange={onTypeChange}
+            required
+          >
+            <option value="">請選擇</option>
+            {#each types as type}
+              <option value={type.id}>{type.name}（NT$ {type.base_price.toLocaleString()} 起）</option>
+            {/each}
+          </select>
+          {#if errors.type_id}
+            <span class="error-msg">{errors.type_id[0]}</span>
+          {/if}
+        </div>
 
-    <!-- 預估金額（隱藏傳遞） -->
-    <input type="hidden" name="estimated_price" value={currentPrice} />
-    <input type="hidden" name="selected_options" value={data.preselectedOptions} />
+        <!-- 預估金額（隱藏傳遞） -->
+        <input type="hidden" name="estimated_price" value={currentPrice} />
+        <input type="hidden" name="selected_options" value={data.preselectedOptions} />
 
-    {#if currentPrice > 0}
-      <div class="price-preview">
-        預估金額：<strong>NT$ {currentPrice.toLocaleString()}</strong>
-        {#if selectedTypeId}
-          <a href="/commission/{selectedTypeId}" class="recalc">重新估價</a>
+        {#if currentPrice > 0}
+          <div class="price-display">
+            預估金額：<strong>NT$ {currentPrice.toLocaleString()}</strong>
+            {#if selectedTypeId}
+              <a href="/commission/{selectedTypeId}" class="recalc">重新估價</a>
+            {/if}
+          </div>
         {/if}
       </div>
-    {/if}
 
-    <!-- 姓名 -->
-    <div class="field">
-      <label for="client_name">稱呼 *</label>
-      <input
-        id="client_name"
-        name="client_name"
-        type="text"
-        placeholder="希望繪師怎麼稱呼你"
-        value={String(values?.client_name ?? "")}
-        required
-      />
-      {#if errors.client_name}
-        <span class="error">{errors.client_name[0]}</span>
-      {/if}
+      <!-- 聯絡資料 -->
+      <div class="form-section">
+        <div class="form-section-title">聯絡資料</div>
+
+        <!-- 姓名 -->
+        <div class="field" class:has-error={!!errors.client_name}>
+          <label for="client_name">稱呼 *</label>
+          <input
+            id="client_name"
+            name="client_name"
+            type="text"
+            placeholder="希望繪師怎麼稱呼你"
+            value={String(values?.client_name ?? "")}
+            required
+          />
+          {#if errors.client_name}
+            <span class="error-msg">{errors.client_name[0]}</span>
+          {/if}
+        </div>
+
+        <!-- Email -->
+        <div class="field" class:has-error={!!errors.client_email}>
+          <label for="client_email">Email *</label>
+          <input
+            id="client_email"
+            name="client_email"
+            type="email"
+            placeholder="用於接收進度通知"
+            value={String(values?.client_email ?? "")}
+            required
+          />
+          {#if errors.client_email}
+            <span class="error-msg">{errors.client_email[0]}</span>
+          {/if}
+        </div>
+      </div>
+
+      <!-- 需求說明 -->
+      <div class="form-section">
+        <div class="form-section-title">需求說明</div>
+        <div class="field" class:has-error={!!errors.detail}>
+          <label for="detail">需求說明 *</label>
+          <textarea
+            id="detail"
+            name="detail"
+            rows="6"
+            placeholder="請描述角色設定、參考圖、特別要求等..."
+            required
+          >{String(values?.detail ?? "")}</textarea>
+          {#if errors.detail}
+            <span class="error-msg">{errors.detail[0]}</span>
+          {/if}
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn">送出委託申請</button>
+    </form>
+
+    <!-- 右側摘要卡 -->
+    <div class="summary-panel">
+      <div class="summary-header">委託摘要</div>
+      <div class="summary-body">
+        <span class="summary-total">NT$ {currentPrice > 0 ? currentPrice.toLocaleString() : '—'}</span>
+        {#if selectedTypeId}
+          <div class="summary-row">
+            <span class="summary-label">項目</span>
+            <span>{types.find(t => t.id === selectedTypeId)?.name ?? '—'}</span>
+          </div>
+        {/if}
+      </div>
     </div>
-
-    <!-- Email -->
-    <div class="field">
-      <label for="client_email">Email *</label>
-      <input
-        id="client_email"
-        name="client_email"
-        type="email"
-        placeholder="用於接收進度通知"
-        value={String(values?.client_email ?? "")}
-        required
-      />
-      {#if errors.client_email}
-        <span class="error">{errors.client_email[0]}</span>
-      {/if}
-    </div>
-
-    <!-- 需求說明 -->
-    <div class="field">
-      <label for="detail">需求說明 *</label>
-      <textarea
-        id="detail"
-        name="detail"
-        rows="6"
-        placeholder="請描述角色設定、參考圖、特別要求等..."
-        required
-      >{String(values?.detail ?? "")}</textarea>
-      {#if errors.detail}
-        <span class="error">{errors.detail[0]}</span>
-      {/if}
-    </div>
-
-    <button type="submit" class="btn-submit">送出委託申請</button>
-  </form>
+  </div>
 </main>
 
 <style>

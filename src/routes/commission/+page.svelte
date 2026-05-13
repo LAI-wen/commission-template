@@ -19,48 +19,52 @@
 <div class="checker-row"></div>
 
 <main class="page">
-  <a href="/" class="back">← 返回名片</a>
-  <h1>委託說明</h1>
-
-  <section class="section">
-    <h2>委託流程</h2>
-    <ol class="flow">
-      <li>填寫申請表單，送出後等待確認</li>
-      <li>繪師確認需求後回覆報價與時程</li>
-      <li>確認後請款，付款完成開始作業</li>
-      <li>草稿確認，修改後交付完稿</li>
-    </ol>
+  <section class="hero-section">
+    <h1 class="hero-title">委託說明</h1>
   </section>
 
-  <section class="section">
-    <h2>委託項目</h2>
-    <div class="type-list">
-      {#each types as type}
-        <a href="/commission/{type.id}" class="type-row">
-          <div>
-            <span class="name">{type.name}</span>
-            {#if type.description}
-              <span class="desc">{type.description}</span>
-            {/if}
-          </div>
-          <span class="price">NT$ {type.base_price.toLocaleString()} 起 →</span>
-        </a>
-      {/each}
+  <div class="steps-strip">
+    <div class="step">
+      <span class="step-num">01</span>
+      <span class="step-text">填寫申請表單，送出後等待確認</span>
     </div>
-  </section>
+    <div class="step">
+      <span class="step-num">02</span>
+      <span class="step-text">繪師確認需求後回覆報價與時程</span>
+    </div>
+    <div class="step">
+      <span class="step-num">03</span>
+      <span class="step-text">確認後請款，付款完成開始作業</span>
+    </div>
+    <div class="step">
+      <span class="step-num">04</span>
+      <span class="step-text">草稿確認，修改後交付完稿</span>
+    </div>
+  </div>
 
-  <section class="section">
-    <h2>注意事項</h2>
-    <ul class="notes">
-      <li>交稿時程依委託量調整，約 2–6 週</li>
-      <li>草稿階段提供 2 次修改機會</li>
-      <li>完稿後不接受大幅度修改</li>
-      <li>個人用途授權，商業用途請另行詢問</li>
-    </ul>
-  </section>
+  <div class="commission-list">
+    {#each types as type, i}
+      <div class="commission-row">
+        <span class="row-num">{String(i + 1).padStart(2, '0')}</span>
+        <div class="row-info">
+          <h3>{type.name}</h3>
+          {#if type.description}
+            <p>{type.description}</p>
+          {/if}
+        </div>
+        <div class="row-meta">
+          <span class="row-price">NT$ {type.base_price.toLocaleString()}</span>
+          <a href="/commission/{type.id}" class="detail-btn">詳情</a>
+        </div>
+      </div>
+    {/each}
+  </div>
 
   {#if isOpen}
-    <a href="/apply" class="btn-apply">申請委託</a>
+    <div class="cta-bar">
+      <h2>準備好了嗎？</h2>
+      <a href="/apply" class="cta-apply">申請委託</a>
+    </div>
   {/if}
 </main>
 
