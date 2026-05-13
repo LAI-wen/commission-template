@@ -2,16 +2,12 @@
   import type { PageData } from "./$types"
 
   let { data }: { data: PageData } = $props()
-
-  const columns = $derived([
-    { key: "inProgress", label: "進行中", items: data.inProgress },
-    { key: "revision",   label: "修改中", items: data.revision },
-    { key: "completed",  label: "已完成", items: data.completed },
-  ])
+  const { pendingPayment, inProgress, revision, completed, delivered } = $derived(data)
 
   function formatDate(ts: number) {
-    return new Date(ts * 1000).toLocaleDateString("zh-TW",
-      { month: "numeric", day: "numeric" })
+    return new Date(ts * 1000).toLocaleDateString("zh-TW", {
+      month: "numeric", day: "numeric",
+    })
   }
 </script>
 
@@ -20,62 +16,147 @@
 </div>
 
 <div class="kanban">
-  {#each columns as col}
-    <div
-      class="kanban-col"
-      class:pending-payment={col.key === 'pendingPayment'}
-      class:delivered={col.key === 'delivered'}
-    >
-      <div class="col-header">
-        <span class="col-title">{col.label}</span>
-        <span class="col-count">{col.items.length}</span>
-      </div>
-
-      {#each col.items as c}
-        <div class="kanban-card">
-          <a href="/dashboard/commission/{c.id}" class="kanban-card-name">
-            {c.client_name}
-          </a>
-          <p class="kanban-card-meta">{formatDate(c.created_at)}</p>
-          {#if c.estimated_price > 0}
-            <p class="kanban-card-price">NT$ {c.estimated_price.toLocaleString()}</p>
-          {/if}
-          {#if c.is_paid === 1}
-            <span class="paid-badge">已收款</span>
-          {:else}
-            <span class="unpaid-badge">未收款</span>
-          {/if}
-          <div class="card-actions">
-            {#if c.is_paid === 0}
-              <form method="POST" action="?/markPaid">
-                <input type="hidden" name="id" value={c.id} />
-                <button type="submit" class="mark-paid-btn">收款</button>
-              </form>
-            {/if}
-            <form method="POST" action="?/updateStatus">
-              <input type="hidden" name="id" value={c.id} />
-              <input type="hidden" name="note" value="" />
-              <select
-                name="status"
-                class="status-select"
-                onchange={(e) => (e.target as HTMLSelectElement).form?.requestSubmit()}
-              >
-                <option value="accepted" selected={c.status === "accepted"}>進行中</option>
-                <option value="in_progress" selected={c.status === "in_progress"}>製作中</option>
-                <option value="revision" selected={c.status === "revision"}>修改中</option>
-                <option value="completed" selected={c.status === "completed"}>已完成</option>
-              </select>
-            </form>
-            <a href="/dashboard/commission/{c.id}" class="detail-link">詳情</a>
-          </div>
-        </div>
-      {/each}
-
-      {#if col.items.length === 0}
-        <p class="col-empty">沒有項目</p>
-      {/if}
+  <!-- 待付款 -->
+  <div class="kanban-col pending-payment">
+    <div class="col-header">
+      <span class="col-title">待付款</span>
+      <span class="col-count">{pendingPayment.length}</span>
     </div>
-  {/each}
+    {#each pendingPayment as c}
+      <div class="kanban-card">
+        <a href="/dashboard/commission/{c.id}" class="kanban-card-name">{c.client_name}</a>
+        <p class="kanban-card-meta">{formatDate(c.created_at)}</p>
+        <p class="kanban-card-price">NT$ {c.estimated_price.toLocaleString()}</p>
+        <span class="unpaid-badge">未付款</span>
+        <div class="card-actions">
+          <form method="POST" action="?/markPaid">
+            <input type="hidden" name="id" value={c.id} />
+            <button class="mark-paid-btn" type="submit">已收款</button>
+          </form>
+          <a class="detail-link" href="/dashboard/commission/{c.id}">詳情</a>
+        </div>
+      </div>
+    {/each}
+    {#if pendingPayment.length === 0}
+      <p class="col-empty">沒有項目</p>
+    {/if}
+  </div>
+
+  <!-- 製作中 -->
+  <div class="kanban-col">
+    <div class="col-header">
+      <span class="col-title">製作中</span>
+      <span class="col-count">{inProgress.length}</span>
+    </div>
+    {#each inProgress as c}
+      <div class="kanban-card">
+        <a href="/dashboard/commission/{c.id}" class="kanban-card-name">{c.client_name}</a>
+        <p class="kanban-card-meta">{formatDate(c.created_at)}</p>
+        <p class="kanban-card-price">NT$ {c.estimated_price.toLocaleString()}</p>
+        {#if c.is_paid === 1}<span class="paid-badge">已收款</span>{/if}
+        <div class="card-actions">
+          <form method="POST" action="?/updateStatus">
+            <input type="hidden" name="id" value={c.id} />
+            <input type="hidden" name="note" value="" />
+            <select
+              class="status-select"
+              name="status"
+              onchange={(e) => (e.target as HTMLSelectElement).form?.requestSubmit()}
+            >
+              <option value="in_progress" selected={c.status === "in_progress"}>製作中</option>
+              <option value="revision" selected={c.status === "revision"}>修改中</option>
+              <option value="completed" selected={c.status === "completed"}>已完成</option>
+            </select>
+          </form>
+          <a class="detail-link" href="/dashboard/commission/{c.id}">詳情</a>
+        </div>
+      </div>
+    {/each}
+    {#if inProgress.length === 0}
+      <p class="col-empty">沒有項目</p>
+    {/if}
+  </div>
+
+  <!-- 修改中 -->
+  <div class="kanban-col">
+    <div class="col-header">
+      <span class="col-title">修改中</span>
+      <span class="col-count">{revision.length}</span>
+    </div>
+    {#each revision as c}
+      <div class="kanban-card">
+        <a href="/dashboard/commission/{c.id}" class="kanban-card-name">{c.client_name}</a>
+        <p class="kanban-card-meta">{formatDate(c.created_at)}</p>
+        <p class="kanban-card-price">NT$ {c.estimated_price.toLocaleString()}</p>
+        <div class="card-actions">
+          <form method="POST" action="?/updateStatus">
+            <input type="hidden" name="id" value={c.id} />
+            <input type="hidden" name="note" value="" />
+            <select
+              class="status-select"
+              name="status"
+              onchange={(e) => (e.target as HTMLSelectElement).form?.requestSubmit()}
+            >
+              <option value="revision" selected={c.status === "revision"}>修改中</option>
+              <option value="in_progress" selected={c.status === "in_progress"}>製作中</option>
+              <option value="completed" selected={c.status === "completed"}>已完成</option>
+            </select>
+          </form>
+          <a class="detail-link" href="/dashboard/commission/{c.id}">詳情</a>
+        </div>
+      </div>
+    {/each}
+    {#if revision.length === 0}
+      <p class="col-empty">沒有項目</p>
+    {/if}
+  </div>
+
+  <!-- 已完成 -->
+  <div class="kanban-col">
+    <div class="col-header">
+      <span class="col-title">已完成</span>
+      <span class="col-count">{completed.length}</span>
+    </div>
+    {#each completed as c}
+      <div class="kanban-card">
+        <a href="/dashboard/commission/{c.id}" class="kanban-card-name">{c.client_name}</a>
+        <p class="kanban-card-meta">{formatDate(c.created_at)}</p>
+        <p class="kanban-card-price">NT$ {c.estimated_price.toLocaleString()}</p>
+        {#if c.is_paid === 1}<span class="paid-badge">已收款</span>{/if}
+        <div class="card-actions">
+          <form method="POST" action="?/updateStatus">
+            <input type="hidden" name="id" value={c.id} />
+            <input type="hidden" name="note" value="" />
+            <input type="hidden" name="status" value="delivered" />
+            <button class="mark-paid-btn" type="submit">標記已交付</button>
+          </form>
+          <a class="detail-link" href="/dashboard/commission/{c.id}">詳情</a>
+        </div>
+      </div>
+    {/each}
+    {#if completed.length === 0}
+      <p class="col-empty">沒有項目</p>
+    {/if}
+  </div>
+
+  <!-- 已交付 -->
+  <div class="kanban-col delivered">
+    <div class="col-header">
+      <span class="col-title">已交付</span>
+      <span class="col-count">{delivered.length}</span>
+    </div>
+    {#each delivered as c}
+      <div class="kanban-card">
+        <a href="/dashboard/commission/{c.id}" class="kanban-card-name">{c.client_name}</a>
+        <p class="kanban-card-meta">{formatDate(c.created_at)}</p>
+        <p class="kanban-card-price">NT$ {c.estimated_price.toLocaleString()}</p>
+        {#if c.is_paid === 1}<span class="paid-badge">已收款</span>{/if}
+      </div>
+    {/each}
+    {#if delivered.length === 0}
+      <p class="col-empty">沒有項目</p>
+    {/if}
+  </div>
 </div>
 
 <style>
@@ -93,7 +174,7 @@
 
 .kanban {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 1rem;
   align-items: start;
   min-height: 60vh;
@@ -235,6 +316,9 @@
   border: 1px dashed var(--color-border-tertiary);
 }
 
+@media (max-width: 1200px) {
+  .kanban { grid-template-columns: repeat(3, 1fr); }
+}
 @media (max-width: 900px) {
   .kanban { grid-template-columns: repeat(2, 1fr); }
 }
