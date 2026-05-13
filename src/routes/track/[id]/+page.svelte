@@ -98,7 +98,14 @@
         </div>
         <div class="content-grid">
           <!-- Image with pins -->
-          <div class="revision-img-wrap" onclick={(e) => onImageClick(e, rev.id)}>
+          <div
+            class="revision-img-wrap"
+            onclick={(e) => onImageClick(e, rev.id)}
+            onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onImageClick(e as unknown as MouseEvent, rev.id) }}
+            role="button"
+            tabindex="0"
+            aria-label="點擊或按 Enter 在圖片上新增留言"
+          >
             <img
               src={rev.image_url}
               alt="Revision {rev.version_number}"
@@ -113,11 +120,12 @@
                   class:resolved={comment.is_resolved === 1}
                   style="left: {comment.x_percent}%; top: {comment.y_percent}%"
                   title={comment.content}
+                  aria-label="{comment.author_role === 'artist' ? '繪師' : '委託人'}留言：{comment.content}"
                 ></div>
               {/if}
             {/each}
             {#if pendingComment && pendingComment.version_id === rev.id}
-              <div class="pin client" style="left: {pendingComment.x}%; top: {pendingComment.y}%" title="待送出"></div>
+              <div class="pin client" style="left: {pendingComment.x}%; top: {pendingComment.y}%" title="待送出" aria-label="待送出的留言位置"></div>
               <div class="comment-popover" style="left: {pendingComment.x}%; top: {pendingComment.y}%">
                 <form method="POST" action="?/addComment" onsubmit={() => { pendingComment = null }}>
                   <input type="hidden" name="version_id" value={rev.id} />
