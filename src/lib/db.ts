@@ -493,3 +493,24 @@ export async function getCommissionsByEmail(db: D1Database, email: string) {
     .bind(email.toLowerCase().trim())
     .all<Commission & { type_name: string | null }>()
 }
+
+export async function setDelivery(
+  db: D1Database,
+  commissionId: string,
+  r2Key: string,
+  expiresAt: number
+) {
+  return db
+    .prepare(
+      "UPDATE commissions SET delivery_r2_key = ?, delivery_expires = ?, updated_at = unixepoch() WHERE id = ?"
+    )
+    .bind(r2Key, expiresAt, commissionId)
+    .run()
+}
+
+export async function getDeliveryKey(db: D1Database, commissionId: string) {
+  return db
+    .prepare("SELECT delivery_r2_key, delivery_expires FROM commissions WHERE id = ?")
+    .bind(commissionId)
+    .first<{ delivery_r2_key: string | null; delivery_expires: number | null }>()
+}

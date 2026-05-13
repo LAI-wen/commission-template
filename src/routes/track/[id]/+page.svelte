@@ -83,6 +83,18 @@
     </div>
   {/if}
 
+  {#if commission.status === 'delivered'}
+    <div class="delivered-notice">
+      <div class="notice-header">✓ 完稿已交付</div>
+      <p class="notice-body">
+        你的完稿已準備好！下載連結已透過 Email 通知。連結有效期為 7 天。
+        {#if commission.delivery_expires}
+          有效至 {new Date(commission.delivery_expires * 1000).toLocaleDateString("zh-TW")}。
+        {/if}
+      </p>
+    </div>
+  {/if}
+
   <!-- Revisions -->
   {#if revisions.length === 0}
     <div class="empty-state">
@@ -465,6 +477,29 @@
   font-family: var(--font-mono);
   border: var(--border);
   box-shadow: var(--shadow-sm);
+}
+
+.delivered-notice {
+  border: 2px solid #16a34a;
+  box-shadow: 4px 4px 0 #16a34a;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+.notice-header {
+  background: #16a34a;
+  color: var(--white);
+  padding: 0.6rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.notice-body {
+  padding: 0.875rem 1rem;
+  font-size: 0.875rem;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.6;
 }
 
 @media (max-width: 768px) {
