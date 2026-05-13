@@ -1,19 +1,36 @@
 <script lang="ts">
   import { page } from "$app/state"
-  const name = page.url.searchParams.get("name") ?? "您"
+
+  const orderId = $derived(page.url.searchParams.get('id') ?? '')
+  let copyLabel = $state('複製')
 </script>
 
-<main class="container">
-  <div class="card">
-    <div class="icon">✓</div>
-    <h1>申請已送出</h1>
-    <p>{name}，感謝您的委託申請！</p>
-    <p class="note">
-      繪師確認後會寄 Email 通知您，
-      請留意信箱（包含垃圾郵件匣）。
-    </p>
-    <a href="/status" class="btn">查詢委託進度</a>
-    <a href="/" class="back">返回名片頁</a>
+<svelte:head>
+  <title>申請已送出</title>
+</svelte:head>
+
+<main class="page">
+  <span class="checkmark">✓</span>
+  <h1 class="success-title">申請已送出！</h1>
+  <p class="success-msg">
+    感謝你的委託申請，繪師會盡快審核並回覆你。<br />
+    請留意 Email 通知。
+  </p>
+
+  {#if orderId}
+    <div class="order-id-box">
+      <span>ORDER ID: {orderId.toUpperCase()}</span>
+      <button class="copy-btn" onclick={() => {
+        navigator.clipboard.writeText(orderId)
+        copyLabel = '已複製！'
+        setTimeout(() => copyLabel = '複製', 1500)
+      }}>{copyLabel}</button>
+    </div>
+  {/if}
+
+  <div class="actions">
+    <a href="/status" class="action-link primary">查詢委託進度</a>
+    <a href="/" class="action-link secondary">返回首頁</a>
   </div>
 </main>
 
