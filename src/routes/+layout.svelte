@@ -1,11 +1,20 @@
 <script lang="ts">
   import favicon from '$lib/assets/favicon.svg';
+  import Nav from '$lib/components/Nav.svelte';
+  import { page } from '$app/state';
+
   let { children } = $props();
+
+  const isPublic = $derived(!page.url.pathname.startsWith('/dashboard'))
 </script>
 
 <svelte:head>
   <link rel="icon" href={favicon} />
 </svelte:head>
+
+{#if isPublic}
+  <Nav />
+{/if}
 
 {@render children()}
 
