@@ -479,3 +479,17 @@ export async function getTopCommissionTypes(db: D1Database) {
     LIMIT 5
   `).all<{ name: string; count: number; revenue: number }>()
 }
+
+export async function getCommissionsByEmail(db: D1Database, email: string) {
+  return db
+    .prepare(`
+      SELECT c.*, ct.name as type_name
+      FROM commissions c
+      LEFT JOIN commission_types ct ON ct.id = c.type_id
+      WHERE c.client_email = ?
+      ORDER BY c.created_at DESC
+      LIMIT 20
+    `)
+    .bind(email.toLowerCase().trim())
+    .all<Commission & { type_name: string | null }>()
+}

@@ -66,6 +66,7 @@
       <a href="/apply" class="cta-apply">申請委託</a>
     </div>
   {/if}
+  <a href="/status" class="status-link">已申請？查詢委託進度 →</a>
 </main>
 
 <style>
@@ -230,6 +231,18 @@
   opacity: 0.7;
 }
 .cta-note a:hover { opacity: 1; }
+
+.status-link {
+  display: block;
+  text-align: center;
+  margin-top: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  letter-spacing: 0.05em;
+}
+.status-link:hover { color: var(--blue); }
 
 @media (max-width: 640px) {
   .steps-strip { flex-direction: column; }
