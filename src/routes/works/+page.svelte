@@ -69,7 +69,7 @@
 
 {#if lightboxWork}
   <div class="lightbox-overlay" onclick={() => lightboxWork = null} role="dialog" aria-modal="true">
-    <div class="lightbox" onclick={(e) => e.stopPropagation()} role="presentation">
+    <div class="lightbox" onclick={(e) => e.stopPropagation()}>
       <button class="lightbox-close" onclick={() => lightboxWork = null}>✕</button>
       <img src={lightboxWork.preview_url} alt={lightboxWork.title ?? ""} class="lightbox-img" />
       <div class="lightbox-info">
@@ -192,12 +192,6 @@
   font-size: 0.9rem;
   font-weight: 700;
 }
-.work-folder {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  opacity: 0.7;
-  margin-top: 4px;
-}
 .orig-badge {
   position: absolute;
   top: 8px;
@@ -260,6 +254,15 @@
   background: var(--white);
   border: 1px solid var(--ink);
   color: var(--ink);
+}
+.work-item:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+  z-index: 1;
+}
+.lightbox-close:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
 }
 .lightbox-close {
   position: absolute;
