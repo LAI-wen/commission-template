@@ -28,6 +28,7 @@ export type CommissionType = {
   base_price: number
   sort_order: number
   is_active: number
+  preview_images: string  // JSON array of URLs
 }
 
 export type CommissionDiscussion = {
@@ -165,10 +166,16 @@ export async function upsertCommissionType(
 }
 
 export async function deleteCommissionType(db: D1Database, id: string) {
-  // 軟刪除或直接刪除？這裡先用隱藏
   return db
     .prepare("UPDATE commission_types SET is_active = 0 WHERE id = ?")
     .bind(id)
+    .run()
+}
+
+export async function updateCommissionTypeImages(db: D1Database, id: string, images: string[]) {
+  return db
+    .prepare("UPDATE commission_types SET preview_images = ? WHERE id = ?")
+    .bind(JSON.stringify(images), id)
     .run()
 }
 

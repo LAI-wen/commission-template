@@ -6,34 +6,14 @@
   const types   = $derived(data.types)
   const isOpen  = $derived(creator?.is_open === 1)
 
-  /* ── type metadata ── */
-  const typeLabels: Record<string, string> = {
-    bust:     'BUST',
-    halfbody: 'HALF',
-    fullbody: 'FULL',
-    fullpage: 'FULL-PAGE',
-    chibi:    'CHIBI',
-    doodle:   'DOODLE',
-    emote:    'EMOTE',
-  }
-  const typeImages: Record<string, string[]> = {
-    bust:     ['/images/大頭一.jpg',           '/images/大頭二.jpg',           '/images/大頭三.jpg'],
-    halfbody: ['/images/塗鴉半身一.png',       '/images/插圖一.jpg'],
-    fullbody: ['/images/插圖二.jpg',           '/images/插圖三.jpg',           '/images/插圖五.jpg'],
-    fullpage: ['/images/滿版一.jpg',           '/images/滿版塗鴉一.jpg',       '/images/滿版塗鴉二.jpg'],
-    chibi:    ['/images/小人塗鴉立繪01.jpg',   '/images/小人塗鴉立繪02.jpg',   '/images/小人塗鴉立繪總覽01.jpg'],
-    doodle:   ['/images/塗鴉大頭一.png',       '/images/塗鴉大頭二.png',       '/images/塗鴉立繪與表情包.jpg'],
-    emote:    ['/images/塗鴉立繪與表情包.jpg', '/images/小人塗鴉立繪總覽01.jpg'],
-  }
-
   /* ── selected type + image ── */
   let selectedTypeIdx = $state(0)
   let selectedImgIdx  = $state(0)
 
   const selectedType   = $derived(types[selectedTypeIdx])
-  const currentImages  = $derived(selectedType ? (typeImages[selectedType.id] ?? []) : [])
+  const currentImages  = $derived<string[]>(selectedType ? JSON.parse(selectedType.preview_images ?? '[]') : [])
   const currentImage   = $derived(currentImages[selectedImgIdx] ?? '')
-  const currentLabelEn = $derived(selectedType ? (typeLabels[selectedType.id] ?? selectedType.name.toUpperCase()) : '')
+  const currentLabelEn = $derived(selectedType ? selectedType.name.toUpperCase() : '')
 
   function selectType(i: number) { selectedTypeIdx = i; selectedImgIdx = 0 }
 
@@ -187,7 +167,7 @@
             <span class="type-num">{String(i + 1).padStart(2, '0')}</span>
             <div class="type-info">
               <p class="type-name">
-                <strong>{typeLabels[type.id] ?? type.name.toUpperCase()}</strong>
+                <strong>{type.name.toUpperCase()}</strong>
                 · {type.name}
               </p>
               {#if type.description}

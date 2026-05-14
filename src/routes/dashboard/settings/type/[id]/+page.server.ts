@@ -1,6 +1,8 @@
 import { error, redirect, fail } from "@sveltejs/kit"
 import type { PageServerLoad, Actions } from "./$types"
-import { getCommissionTypeWithOptions, upsertCommissionType, deleteCommissionType, upsertPriceOption, deletePriceOption } from "$lib/db"
+import { getCommissionTypeWithOptions, upsertCommissionType, deleteCommissionType, upsertPriceOption, deletePriceOption, updateCommissionTypeImages } from "$lib/db"
+import { nanoid } from "nanoid"
+import { validateArtistSession } from "$lib/auth"
 
 export const load: PageServerLoad = async ({ params, platform }) => {
   const db = platform!.env.DB
@@ -75,5 +77,60 @@ export const actions: Actions = {
     const id = data.get("option_id") as string
     await deletePriceOption(db, id)
     return { success: true }
-  }
+  },
+
+  uploadImage: async ({ request, platform, params }) => {
+    const env = platform!.env
+    const isArtist = await validateArtistSession(request, env)
+    if (!isArtist) return fail(401, { message: "未授權" })
+
+    const data = await request.formData()
+    const file = data.get("file") as File | null
+    if (!file || !file.size) return fail(400, { message: "請選擇圖片" })
+
+    let url: string
+    if (env.HUB_URL) {
+      const creator = await import("$lib/db").then(m => m.getCreator(env.DB))
+      if (creator?.hub_token) {
+        const hubForm = new FormData()
+        hubForm.append("file", file)
+        const res = await fetch(`${env.HUB_URL}/api/upload`, {
+          method: "POST",
+          headers: { "x-hub-token": creator.hub_token as string, "origin": env.HUB_URL },
+          body: hubForm,
+          signal: AbortSignal.timeout(15000),
+        })
+        if (!res.ok) return fail(502, { message: "圖片上傳失敗" })
+        const json = await res.json() as { url: string }
+        url = json.url
+      } else {
+        return fail(503, { message: "未設定儲存" })
+      }
+    } else if (env.R2) {
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg"
+      const key = `${nanoid()}.${ext}`
+      await env.R2.put(key, file.stream(), { httpMetadata: { contentType: file.type } })
+      url = `${env.ORIGIN}/api/assets/${key}`
+    } else {
+      return fail(503, { message: "未設定儲存" })
+    }
+
+    const { type } = await getCommissionTypeWithOptions(env.DB, params.id)
+    if (!type) return fail(404, { message: "找不到項目" })
+
+    const existing: string[] = JSON.parse(type.preview_images ?? "[]")
+    await updateCommissionTypeImages(env.DB, params.id, [...existing, url])
+    return { uploadedUrl: url }
+  },
+
+  removeImage: async ({ request, platform, params }) => {
+    const db = platform!.env.DB
+    const data = await request.formData()
+    const url = data.get("url") as string
+    const { type } = await getCommissionTypeWithOptions(db, params.id)
+    if (!type) return fail(404, { message: "找不到項目" })
+    const existing: string[] = JSON.parse(type.preview_images ?? "[]")
+    await updateCommissionTypeImages(db, params.id, existing.filter(u => u !== url))
+    return { success: true }
+  },
 }

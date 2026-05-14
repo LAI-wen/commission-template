@@ -1,12 +1,16 @@
 <script lang="ts">
   import type { PageData, ActionData } from "./$types"
+  import { enhance } from "$app/forms"
 
   let { data, form }: { data: PageData; form: ActionData } = $props()
 
   const type = $derived(data.type)
   const options = $derived(data.options as any[])
+  const images = $derived<string[]>(JSON.parse((data.type as any)?.preview_images ?? "[]"))
 
   let editingOptionId = $state<string | null>(null)
+  let uploading = $state(false)
+  let uploadError = $state("")
 </script>
 
 <svelte:head>
@@ -58,6 +62,46 @@
   </section>
 
   {#if type}
+    <!-- ── 範例圖片 ── -->
+    <section class="section">
+      <h2>範例圖片</h2>
+      <p class="section-hint">顯示在 /commission 頁的類型預覽輪播，建議上傳 3-5 張作品圖。</p>
+
+      <div class="img-grid">
+        {#each images as imgUrl, i}
+          <div class="img-item">
+            <img src={imgUrl} alt="預覽 {i + 1}" class="img-thumb" />
+            <form method="POST" action="?/removeImage" use:enhance>
+              <input type="hidden" name="url" value={imgUrl} />
+              <button type="submit" class="img-del" aria-label="刪除">✕</button>
+            </form>
+          </div>
+        {/each}
+
+        <label class="img-add" class:uploading>
+          {#if uploading}
+            <span class="img-add-icon">⏳</span>
+            <span>上傳中…</span>
+          {:else}
+            <span class="img-add-icon">＋</span>
+            <span>新增圖片</span>
+          {/if}
+          <input type="file" accept="image/*" style="display:none;" disabled={uploading}
+            onchange={async (e) => {
+              const file = (e.target as HTMLInputElement).files?.[0]
+              if (!file) return
+              uploading = true; uploadError = ""
+              const fd = new FormData(); fd.append("file", file)
+              const res = await fetch("?/uploadImage", { method: "POST", body: fd })
+              uploading = false
+              if (!res.ok) uploadError = "上傳失敗，請重試"
+              else location.reload()
+            }} />
+        </label>
+      </div>
+      {#if uploadError}<p class="upload-error">{uploadError}</p>{/if}
+    </section>
+
     <section class="section">
       <h2>加價選項</h2>
       
@@ -132,6 +176,20 @@
 </div>
 
 <style>
+  .section-hint { font-size: 0.8rem; color: var(--color-text-secondary); margin: -0.5rem 0 1rem; }
+
+  .img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.75rem; }
+  .img-item { position: relative; aspect-ratio: 3/4; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); overflow: hidden; }
+  .img-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .img-del { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; background: rgba(0,0,0,0.6); color: white; border: none; cursor: pointer; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; line-height: 1; opacity: 0; transition: opacity 0.15s; }
+  .img-item:hover .img-del { opacity: 1; }
+  .img-add { aspect-ratio: 3/4; border: 1.5px dashed var(--color-border-secondary); border-radius: var(--border-radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+  .img-add:hover { border-color: var(--color-text-primary); background: color-mix(in srgb, var(--color-text-primary) 4%, transparent); }
+  .img-add.uploading { opacity: 0.6; cursor: not-allowed; }
+  .img-add-icon { font-size: 1.5rem; line-height: 1; color: var(--color-text-secondary); }
+  .img-add span:last-child { font-size: 0.75rem; color: var(--color-text-secondary); }
+  .upload-error { font-size: 0.8rem; color: var(--color-text-danger); margin-top: 0.5rem; }
+
   .back { display: inline-block; font-size: 0.85rem; color: var(--color-text-secondary); text-decoration: none; margin-bottom: 1.5rem; }
   .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
   h1 { font-size: 1.5rem; font-weight: 500; margin: 0; }
