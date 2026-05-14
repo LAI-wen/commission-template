@@ -3,7 +3,7 @@
   let { data }: { data: any } = $props()
 </script>
 
-<CardEditor />
+<CardEditor creator={data.creator} types={data.types ?? []} />
 
 <style>
   :global(.dashboard-content) {

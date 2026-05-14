@@ -2,12 +2,26 @@
   import GlobalDesignPanel from './GlobalDesignPanel.svelte'
   import { DEFAULT_GLOBAL } from './globalDesign'
   import type { GlobalDesign } from './globalDesign'
+  import type { CommissionType } from '$lib/db'
 
   type StyleMap = {
     bgColor?: string; textColor?: string; borderColor?: string
     borderStyle?: string; borderWidth?: string; radius?: string; opacity?: number
   }
   type Block = { id: string; type: string; data: Record<string, any> }
+
+  interface Props {
+    creator?: { display_name?: any; avatar_url?: string | null; [k: string]: any } | null
+    types?: CommissionType[]
+  }
+  let { creator = null, types = [] }: Props = $props()
+
+  function extractName(n: any): string {
+    if (!n) return '創作者名稱'
+    if (typeof n === 'string') return n
+    if (typeof n === 'object') return n.zh ?? n.en ?? '創作者名稱'
+    return '創作者名稱'
+  }
 
   // ── Global design ──
   let globalDesign = $state<GlobalDesign>({ ...DEFAULT_GLOBAL })
@@ -30,8 +44,8 @@
 
   // ── State ──
   let blocks = $state<Block[]>([
-    { id:'profile_avatar', type:'avatar',       data:{ src:'https://i.pravatar.cc/200?img=47', shape:'square' } },
-    { id:'profile_name',   type:'profile_name', data:{ name:'小花插畫' } },
+    { id:'profile_avatar', type:'avatar',       data:{ src: creator?.avatar_url ?? 'https://i.pravatar.cc/200?img=47', shape:'square' } },
+    { id:'profile_name',   type:'profile_name', data:{ name: extractName(creator?.display_name) } },
     { id:'el_sec_001',     type:'section',      data:{ title:'#HOME' } },
     { id:'el_img_001',     type:'image',        data:{ src:'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=600&auto=format&fit=crop&q=60', alt:'作品' } },
     { id:'el_tags_001',    type:'tags',         data:{ tags:['畫圖的','⬛ 開發','🎮 FF14小草'] } },
@@ -419,9 +433,16 @@
             <div class="commission-block" style={bg}>
               <div class="commission-title">委託項目</div>
               <div class="commission-list">
-                <div class="commission-row"><span>半身像</span><span>NT$ 1,200 起</span></div>
-                <div class="commission-row"><span>全身像</span><span>NT$ 2,500 起</span></div>
-                <div class="commission-row commission-last"><span>完整插畫</span><span>NT$ 4,800 起</span></div>
+                {#if types.length > 0}
+                  {#each types as t, i}
+                    <div class="commission-row" class:commission-last={i === types.length - 1}>
+                      <span>{t.name}</span>
+                      <span>NT$ {t.base_price.toLocaleString()} 起</span>
+                    </div>
+                  {/each}
+                {:else}
+                  <div class="commission-row commission-last commission-empty"><span>尚未設定委託項目</span></div>
+                {/if}
               </div>
             </div>
 
@@ -837,6 +858,7 @@
   .commission-row { display: flex; justify-content: space-between; align-items: center; padding: .5rem 0; border-bottom: 1px solid rgba(255,255,255,.2); font-size: .875rem; }
   .commission-row span:last-child { font-weight: 900; }
   .commission-last { border-bottom: none; }
+  .commission-empty { opacity: .5; justify-content: center; }
   .queue-block { width: 100%; padding: 1.25rem; text-align: center; }
   .queue-label { font-size: .75rem; font-weight: 700; opacity: .7; margin-bottom: .5rem; }
   .queue-count { font-size: 1.5rem; font-weight: 900; margin-bottom: .75rem; }

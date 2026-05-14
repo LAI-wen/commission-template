@@ -325,7 +325,7 @@
   .close-btn { width:1.75rem; height:1.75rem; border-radius:999px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:.875rem; background:color-mix(in srgb,var(--ink) 5%,transparent); color:color-mix(in srgb,var(--ink) 30%,transparent); transition:background .15s }
   .close-btn:hover { background:color-mix(in srgb,var(--ink) 10%,transparent) }
 
-  .gd-body { overflow-y:auto; flex:1; padding:.75rem; display:flex; flex-direction:column; gap:.5rem }
+  .gd-body { overflow-y:auto; flex:1; padding:.75rem; display:flex; flex-direction:column; gap:.5rem; min-height:0; }
   .gd-body::-webkit-scrollbar { width:4px }
   .gd-body::-webkit-scrollbar-thumb { background:var(--blue); border-radius:99px }
 

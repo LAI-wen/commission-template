@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { GlobalDesign } from '$lib/components/editor/globalDesign'
+  import type { CommissionType } from '$lib/db'
 
   type Block = { id: string; type: string; data: Record<string, any> }
   type StyleMap = {
@@ -12,9 +13,10 @@
     overrides?: Record<string, StyleMap>
     device?: 'mobile' | 'desktop'
     globalDesign?: GlobalDesign | null
+    types?: CommissionType[]
   }
 
-  let { blocks = [], overrides = {}, device = 'desktop', globalDesign = null }: Props = $props()
+  let { blocks = [], overrides = {}, device = 'desktop', globalDesign = null, types = [] }: Props = $props()
 
   const THEME = $derived<Required<StyleMap>>({
     bgColor:     globalDesign?.bgBlockColor  ?? 'var(--ink)',
@@ -174,14 +176,18 @@
         <div class="commission-block">
           <div class="commission-title">委託項目</div>
           <div class="commission-list">
-            <div class="commission-row">
-              <span>基本方案</span>
-              <span>洽詢</span>
-            </div>
-            <div class="commission-row">
-              <span>加急方案</span>
-              <span>洽詢</span>
-            </div>
+            {#if types.length > 0}
+              {#each types as t, i}
+                <div class="commission-row" style={i === types.length - 1 ? 'border-bottom:none;' : ''}>
+                  <span>{t.name}</span>
+                  <span>NT$ {t.base_price.toLocaleString()} 起</span>
+                </div>
+              {/each}
+            {:else}
+              <div class="commission-row" style="border-bottom:none;opacity:.5;justify-content:center;">
+                <span>尚未設定委託項目</span>
+              </div>
+            {/if}
           </div>
         </div>
       {:else if block.type === 'queue'}

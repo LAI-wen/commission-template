@@ -1,4 +1,4 @@
-import { getCreator, updateCreatorManage, updatePageConfig } from "$lib/db"
+import { getCreator, updateCreatorManage, updatePageConfig, getCommissionTypes } from "$lib/db"
 import { fail } from "@sveltejs/kit"
 import { z } from "zod"
 import type { Actions, PageServerLoad } from "./$types"
@@ -26,11 +26,15 @@ export const load: PageServerLoad = async ({ platform }) => {
         avatar_url: "/avatar.jpg",
         page_config: null,
       },
+      types: [],
     }
   }
 
-  const creator = await getCreator(db)
-  return { creator }
+  const [creator, typesResult] = await Promise.all([
+    getCreator(db),
+    getCommissionTypes(db),
+  ])
+  return { creator, types: typesResult.results }
 }
 
 export const actions: Actions = {
