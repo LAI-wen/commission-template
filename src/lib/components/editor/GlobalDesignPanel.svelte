@@ -49,11 +49,11 @@
   }
 </script>
 
-{#if design.fontUrl}
-  <svelte:head>
+<svelte:head>
+  {#if design.fontUrl}
     <link rel="stylesheet" href={design.fontUrl} />
-  </svelte:head>
-{/if}
+  {/if}
+</svelte:head>
 
 <div class="gd-panel panel-enter" role="complementary" aria-label="全局設計">
   <div class="gd-inner">

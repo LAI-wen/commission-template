@@ -702,7 +702,7 @@
 {#if globalOpen}
   <GlobalDesignPanel
     design={globalDesign}
-    onpatch={(patch) => globalDesign = { ...globalDesign, ...patch }}
+    onpatch={(patch: Partial<GlobalDesign>) => globalDesign = { ...globalDesign, ...patch }}
     onclose={closeGlobal}
     uploading={bgUploading}
     onupload={uploadBgImage}
