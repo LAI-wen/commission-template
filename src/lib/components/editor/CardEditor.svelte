@@ -255,7 +255,7 @@
   // ── 點空白取消選取 ──
   function clickOut(e: MouseEvent) {
     const t = e.target as Element
-    if (!t.closest('.block-wrap') && !t.closest('.attr-panel') && !t.closest('.add-panel') && !t.closest('.gd-panel')) {
+    if (!t.closest('.block-wrap') && !t.closest('.attr-panel') && !t.closest('.add-panel') && !t.closest('.gd-panel') && !t.closest('.fab-col')) {
       if (selectedId) selectedId = null
       if (globalOpen) globalOpen = false
     }
