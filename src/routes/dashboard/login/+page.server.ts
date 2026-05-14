@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ request, platform }) => {
 }
 
 export const actions: Actions = {
-  default: async ({ request, platform }) => {
+  default: async ({ request, platform, cookies }) => {
     const env = platform!.env
     const data = await request.formData()
     const password = (data.get("password") as string ?? "").trim()
@@ -25,12 +25,13 @@ export const actions: Actions = {
     const token = generateSessionToken()
     await env.KV.put(`session:${token}`, "1", { expirationTtl: 60 * 60 * 24 * 30 })
 
-    return new Response(null, {
-      status: 303,
-      headers: {
-        Location: "/dashboard",
-        "Set-Cookie": `session=${token}; HttpOnly; Path=/; Max-Age=${60 * 60 * 24 * 30}; SameSite=Lax`,
-      },
+    cookies.set("session", token, {
+      httpOnly: true,
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+      sameSite: "lax",
     })
+
+    throw redirect(303, "/dashboard")
   },
 }
