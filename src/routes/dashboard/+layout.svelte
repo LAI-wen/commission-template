@@ -122,6 +122,7 @@
   top: 0;
   height: 100vh;
   overflow-y: auto;
+  z-index: 10;
 }
 
 .sidebar-logo {

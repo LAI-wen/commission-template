@@ -300,7 +300,6 @@
     background-attachment:{globalDesign.bgAttachment};
     background-position:center;
     filter:brightness({globalDesign.bgBrightness}%) blur({globalDesign.bgBlur}px) saturate({globalDesign.bgSaturation}%);
-    opacity:1;
   "></div>
 
   <div class="preview-wrap" class:mobile={device === 'mobile'} class:full-width={globalDesign.layoutWidth==='full'}>
