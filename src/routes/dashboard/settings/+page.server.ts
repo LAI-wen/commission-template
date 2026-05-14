@@ -19,12 +19,10 @@ export const actions: Actions = {
     const token = ((data.get("hub_token") as string) ?? "").trim()
     const siteUrl = ((data.get("site_url") as string) ?? "").trim()
 
-    if (!token) {
-      return fail(400, { errors: { hub_token: ["請輸入 Hub Token"] } })
-    }
-    if (!siteUrl) {
-      return fail(400, { errors: { site_url: ["請輸入網站網址"] } })
-    }
+    const errors: { hub_token?: string[]; site_url?: string[] } = {}
+    if (!token) errors.hub_token = ["請輸入 Hub Token"]
+    if (!siteUrl) errors.site_url = ["請輸入網站網址"]
+    if (Object.keys(errors).length > 0) return fail(400, { errors })
 
     await env.DB.prepare("UPDATE creators SET hub_token = ?, site_url = ? WHERE id = 'main'")
       .bind(token, siteUrl)

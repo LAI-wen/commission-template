@@ -39,7 +39,7 @@
     try {
       const res = await fetch("/api/upload", { method: "POST", body: fd })
       if (!res.ok) { uploadError = await res.text(); return }
-      const { url } = await res.json()
+      const { url } = await res.json() as { url: string }
       if (type === "preview") previewUrl = url
       else originalUrl = url
     } catch (e) {

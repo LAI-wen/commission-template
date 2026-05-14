@@ -115,7 +115,7 @@
     const res = await fetch(`/api/delivery/${commission.id}`, { method: "POST", body: fd })
     delivering = false
     if (!res.ok) { alert("上傳失敗"); return }
-    const { downloadUrl } = await res.json()
+    const { downloadUrl } = await res.json() as { downloadUrl: string }
     deliveryUrl = downloadUrl
   }
 

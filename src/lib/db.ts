@@ -58,11 +58,34 @@ export type InboxNotification = {
   created_at: number
 }
 
+export type Creator = {
+  id: string
+  display_name: string
+  bio: string | null
+  avatar_url: string | null
+  styles: string | null
+  contact_email: string | null
+  contact_discord: string | null
+  contact_other: string | null
+  is_open: number
+  open_note: string | null
+  queue_limit: number | null
+  hub_token: string | null
+  created_at: number
+  page_config: string | null
+  open_status: string | null
+  next_open: string | null
+  process_config: string | null
+  site_url: string | null
+  email_mode: string | null
+  notify_client_message_email: number
+}
+
 // ── 繪師資料 ──────────────────────────
 export async function getCreator(db: D1Database) {
   return db
     .prepare("SELECT * FROM creators WHERE id = 'main'")
-    .first<Record<string, unknown>>()
+    .first<Creator>()
 }
 
 export async function updateCreatorStatus(

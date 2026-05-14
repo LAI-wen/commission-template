@@ -107,7 +107,7 @@
 
     <!-- ═══ PROFILE SHEET ═══════════════════════════════════════ -->
     {#if sub === 'profile'}
-      <form method="POST" action="?/updateProfile" use:enhance={({ form, data, action, cancel }) => {
+      <form method="POST" action="?/updateProfile" use:enhance={({ action, cancel }) => {
         return async ({ result }) => {
           if (result.type === 'success') {
             profileSaved = true

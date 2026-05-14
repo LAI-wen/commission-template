@@ -3,10 +3,10 @@ import type { PageServerLoad } from "./$types"
 
 export const load: PageServerLoad = async ({ platform }) => {
   const db = platform!.env.DB
-  const [monthly, overall, topTypes] = await Promise.all([
+  const [monthly, overall, topTypesResult] = await Promise.all([
     getMonthlyStats(db, 6),
     getOverallStats(db),
     getTopCommissionTypes(db),
   ])
-  return { monthly, overall, topTypes }
+  return { monthly, overall, topTypes: topTypesResult.results }
 }

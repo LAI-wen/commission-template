@@ -15,6 +15,8 @@ declare global {
     SESSION_SECRET: string
     ORIGIN: string
     EMAIL_DOMAIN: string
+    ARTIST_EMAIL: string | undefined
+    HUB_URL: string | undefined
   }
 }
 

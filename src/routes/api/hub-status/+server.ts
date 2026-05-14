@@ -21,19 +21,17 @@ export const GET: RequestHandler = async ({ request, platform }) => {
   const typesResult = await getCommissionTypes(env.DB)
 
   return Response.json({
-    id: env.CREATOR_ID ?? "main",
+    id: "main",
     display_name: creator.display_name,
     avatar_url: creator.avatar_url ?? null,
-    site_url: (creator as any).site_url || env.ORIGIN,
+    site_url: creator.site_url || env.ORIGIN,
     styles: (() => {
-      try { return JSON.parse(creator.styles as string ?? "[]") }
+      try { return JSON.parse(creator.styles ?? "[]") }
       catch { return [] }
     })(),
     tags: (() => {
-      try {
-        const raw = creator as any
-        return JSON.parse(raw.tags ?? "[]")
-      } catch { return [] }
+      try { return JSON.parse((creator as any).tags ?? "[]") }
+      catch { return [] }
     })(),
     is_open: creator.is_open === 1,
     open_note: creator.open_note ?? null,
