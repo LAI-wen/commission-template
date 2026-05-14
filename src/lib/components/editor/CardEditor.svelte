@@ -168,6 +168,22 @@
     document.querySelectorAll('.dragging,.drag-over').forEach(el => el.classList.remove('dragging','drag-over'))
   }
 
+  // ── 圖片上傳 ──
+  let uploading = $state(false)
+  async function uploadImage(file: File, blockId: string, dataKey: string) {
+    uploading = true
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      if (!res.ok) { toast('上傳失敗'); return }
+      const { url } = await res.json() as { url: string }
+      upd(blockId, dataKey, url)
+      toast('✓ 圖片已上傳')
+    } catch { toast('上傳失敗') }
+    finally { uploading = false }
+  }
+
   // ── Toast ──
   function toast(msg: string) {
     const id = toastN++
@@ -178,9 +194,34 @@
   // ── 儲存 ──
   function saveAll() {
     try {
+      // 保存到 localStorage
       localStorage.setItem('card_blocks', JSON.stringify(blocks))
       localStorage.setItem('card_overrides', JSON.stringify(overrides))
-      toast('✓ 已儲存')
+      
+      // 準備配置對象
+      const config = {
+        blocks,
+        overrides,
+        timestamp: Date.now(),
+      }
+      
+      // 保存到服務器
+      const formData = new FormData()
+      formData.append('config', JSON.stringify(config))
+      
+      fetch('?/saveCardConfig', {
+        method: 'POST',
+        body: formData,
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Save failed')
+          toast('✓ 已儲存到服務器')
+          // 觸發頁面更新，使首頁可以讀取新的配置
+          window.dispatchEvent(new CustomEvent('cardConfigUpdated', { detail: config }))
+        })
+        .catch(() => {
+          toast('⚠ 本地已儲存，但服務器保存失敗')
+        })
     } catch { toast('儲存失敗') }
   }
 
@@ -235,6 +276,7 @@
           class:selected={block.id === selectedId}
           data-id={block.id}
           draggable={true}
+          style="border-radius:{s.radius}"
           onclick={(e) => { e.stopPropagation(); sel(block.id) }}
           ondragstart={(e) => dstart(e, block.id)}
           ondragover={(e) => dover(e, block.id)}
@@ -367,7 +409,7 @@
 </div>
 
 <!-- ── 右側 FABs ── -->
-<div class="fab-col">
+<div class="fab-col" class:panel-open={!!selBlock}>
   <div class="device-toggle">
     <button class="dev-btn" class:dev-active={device==='desktop'} onclick={() => device='desktop'} title="桌機">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
@@ -410,7 +452,13 @@
               <button class="size-btn" class:active={selBlock.data.shape==='square'} onclick={() => upd(selBlock.id,'shape','square')}>方圓角</button>
               <button class="size-btn" class:active={selBlock.data.shape==='circle'} onclick={() => upd(selBlock.id,'shape','circle')}>圓形</button>
             </div>
-            <div class="p-label" style="margin-top:.4rem;">頭像 URL</div>
+            <div class="p-label" style="margin-top:.4rem;">上傳頭像</div>
+            <label class="upload-btn" class:uploading>
+              {#if uploading}上傳中…{:else}選擇檔案{/if}
+              <input type="file" accept="image/*" style="display:none;" disabled={uploading}
+                onchange={(e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) uploadImage(f, selBlock.id, 'src') }} />
+            </label>
+            <div class="p-label" style="margin-top:.4rem;">或貼上 URL</div>
             <input class="p-input" value={selBlock.data.src} onchange={(e) => upd(selBlock.id,'src',(e.target as HTMLInputElement).value)} />
           </div>
 
@@ -428,7 +476,13 @@
 
         {:else if selBlock.type === 'image'}
           <div class="field-group">
-            <div class="p-label">圖片 URL</div>
+            <div class="p-label">上傳圖片</div>
+            <label class="upload-btn" class:uploading>
+              {#if uploading}上傳中…{:else}選擇檔案{/if}
+              <input type="file" accept="image/*" style="display:none;" disabled={uploading}
+                onchange={(e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) uploadImage(f, selBlock.id, 'src') }} />
+            </label>
+            <div class="p-label" style="margin-top:.4rem;">或貼上 URL</div>
             <input class="p-input" value={selBlock.data.src} onchange={(e) => upd(selBlock.id,'src',(e.target as HTMLInputElement).value)} />
           </div>
 
@@ -682,7 +736,7 @@
   }
   .block-wrap:global(.dragging)  { opacity: .4; }
   .block-wrap:global(.drag-over) { border-top: 2px solid var(--blue); }
-  .block-wrap.selected { outline: 2px solid var(--blue); outline-offset: 3px; }
+  .block-wrap.selected { box-shadow: 0 0 0 2px var(--blue), 0 0 0 4px color-mix(in srgb,var(--blue) 15%,transparent); }
 
   /* Grip */
   .grip {
@@ -741,7 +795,8 @@
   .generic-block { padding: 1.25rem; text-align: center; font-size: .875rem; opacity: .6; }
 
   /* FABs */
-  .fab-col { position: fixed; top: 6rem; right: 1.5rem; z-index: 40; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+  .fab-col { position: fixed; top: 6rem; right: 1.5rem; z-index: 60; display: flex; flex-direction: column; align-items: center; gap: 1rem; transition: right .22s cubic-bezier(.25,.46,.45,.94); }
+  .fab-col.panel-open { right: calc(18rem + 2rem); }
   .device-toggle { display: flex; padding: .375rem; border-radius: 999px; gap: .25rem; background: rgba(255,255,255,.75); backdrop-filter: blur(12px); border: 1px solid color-mix(in srgb,var(--ink) 10%,transparent); box-shadow: 0 2px 8px rgba(0,0,0,.08); }
   .dev-btn { padding: .625rem; border-radius: 999px; border: none; cursor: pointer; background: transparent; color: color-mix(in srgb,var(--ink) 40%,transparent); transition: all .15s; display: flex; align-items: center; justify-content: center; }
   .dev-btn.dev-active { background: var(--ink); color: white; box-shadow: 0 2px 8px color-mix(in srgb,var(--ink) 35%,transparent); }
@@ -810,9 +865,28 @@
   .anon-note-list { font-size: .6875rem; line-height: 1.6; list-style: disc; list-style-position: inside; color: color-mix(in srgb,var(--ink) 45%,transparent); margin: 0; padding: 0; }
 
   /* Add panel */
-  .add-overlay { position: fixed; inset: 0; z-index: 59; background: color-mix(in srgb,var(--ink) 15%,transparent); backdrop-filter: blur(2px); }
-  .add-panel { position: fixed; inset-y: 0; left: 0; z-index: 60; width: 16rem; display: flex; flex-direction: column; background: color-mix(in srgb,var(--cream) 97%,transparent); backdrop-filter: blur(20px); border-right: 1px solid color-mix(in srgb,var(--ink) 8%,transparent); box-shadow: 4px 0 40px rgba(0,0,0,.12); transform: translateX(-100%); transition: transform .3s cubic-bezier(.25,.46,.45,.94); }
+  .add-overlay { position: fixed; inset: 0; z-index: 55; background: color-mix(in srgb,var(--ink) 20%,transparent); backdrop-filter: blur(4px); pointer-events: auto; }
+  .add-panel { position: fixed; top: 0; bottom: 0; left: 224px; z-index: 65; width: 16rem; display: flex; flex-direction: column; background: white; border-right: 2px solid color-mix(in srgb,var(--ink) 8%,transparent); box-shadow: 8px 0 32px rgba(0,0,0,.15); transform: translateX(-200%); transition: transform .3s cubic-bezier(.25,.46,.45,.94); pointer-events: auto; }
   .add-panel.add-open { transform: translateX(0); }
+
+  @media (max-width: 900px) {
+    .add-panel { left: 56px; }
+  }
+
+  @media (max-width: 680px) {
+    .add-panel {
+      left: 0; right: 0; top: auto; bottom: 0;
+      width: 100%;
+      height: 65vh; max-height: 85vh;
+      border-right: none;
+      border-top: 2px solid color-mix(in srgb,var(--ink) 8%,transparent);
+      border-radius: 1.25rem 1.25rem 0 0;
+      box-shadow: 0 -8px 32px rgba(0,0,0,.15);
+      transform: translateY(100%);
+    }
+    .add-panel.add-open { transform: translateY(0); }
+    .add-panel-body { overflow-y: auto; }
+  }
   .add-panel-hdr { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid color-mix(in srgb,var(--ink) 6%,transparent); font-weight: 700; font-size: .875rem; color: color-mix(in srgb,var(--ink) 60%,transparent); flex-shrink: 0; }
   .add-panel-body { flex: 1; overflow-y: auto; padding: 1rem; }
   .add-section-label { font-size: .625rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: color-mix(in srgb,var(--ink) 30%,transparent); margin-bottom: .75rem; }
@@ -828,6 +902,11 @@
   .add-icon-wide { width: 2.25rem; height: 2.25rem; border-radius: .75rem; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
   .add-wide-title { font-weight: 700; font-size: .75rem; color: var(--blue); }
   .add-wide-sub { font-size: .625rem; color: color-mix(in srgb,var(--blue) 70%,transparent); }
+
+  /* Upload button */
+  .upload-btn { display: flex; align-items: center; justify-content: center; width: 100%; padding: .45rem .7rem; border: 1.5px dashed color-mix(in srgb,var(--ink) 18%,transparent); border-radius: .75rem; background: color-mix(in srgb,var(--cream) 60%,transparent); font-size: .8125rem; font-weight: 600; color: color-mix(in srgb,var(--ink) 50%,transparent); cursor: pointer; transition: border-color .15s, background .15s; }
+  .upload-btn:hover { border-color: var(--blue); background: color-mix(in srgb,var(--blue) 6%,transparent); color: var(--blue); }
+  .upload-btn.uploading { opacity: .6; cursor: not-allowed; }
 
   /* Scrollbar */
   .attr-body::-webkit-scrollbar,

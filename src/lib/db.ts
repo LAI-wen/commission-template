@@ -101,6 +101,16 @@ export async function updateCreatorStatus(
     .run()
 }
 
+export async function updatePageConfig(
+  db: D1Database,
+  config: string
+) {
+  return db
+    .prepare("UPDATE creators SET page_config = ? WHERE id = 'main'")
+    .bind(config)
+    .run()
+}
+
 // ── 委託類型 ──────────────────────────
 export async function getCommissionTypes(db: D1Database) {
   return db
@@ -769,5 +779,52 @@ export async function updateCreatorManage(
   return db
     .prepare(`UPDATE creators SET ${sets.join(', ')} WHERE id = ?`)
     .bind(...vals)
+    .run()
+}
+
+// ── 匿名箱訊息 ──────────────────────────
+export type AnonMessage = {
+  id: string
+  block_id: string
+  content: string
+  is_read: number
+  created_at: number
+}
+
+export async function createAnonMessage(
+  db: D1Database,
+  blockId: string,
+  content: string
+) {
+  const id = nanoid()
+  return db
+    .prepare("INSERT INTO anon_messages (id, block_id, content) VALUES (?, ?, ?)")
+    .bind(id, blockId, content)
+    .run()
+}
+
+export async function getAnonMessages(db: D1Database, limit = 60) {
+  return db
+    .prepare("SELECT * FROM anon_messages ORDER BY created_at DESC LIMIT ?")
+    .bind(limit)
+    .all<AnonMessage>()
+}
+
+export async function getUnreadAnonCount(db: D1Database) {
+  return db
+    .prepare("SELECT COUNT(*) as unread_count FROM anon_messages WHERE is_read = 0")
+    .first<{ unread_count: number }>()
+}
+
+export async function markAnonMessageRead(db: D1Database, id: string) {
+  return db
+    .prepare("UPDATE anon_messages SET is_read = 1 WHERE id = ?")
+    .bind(id)
+    .run()
+}
+
+export async function markAllAnonMessagesRead(db: D1Database) {
+  return db
+    .prepare("UPDATE anon_messages SET is_read = 1 WHERE is_read = 0")
     .run()
 }

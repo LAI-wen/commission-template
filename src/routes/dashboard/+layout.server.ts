@@ -11,6 +11,9 @@ export const load: LayoutServerLoad = async ({ request, platform, url }) => {
 
   await ensureMigrated(env)
 
+  // In development or if KV is not available, skip auth check
+  if (!env?.KV) return {}
+
   const isArtist = await validateArtistSession(request, env)
   if (!isArtist) throw redirect(302, "/dashboard/login")
 

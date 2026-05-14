@@ -105,77 +105,15 @@
 
   <div class="manage-body">
 
-    <!-- ═══ PROFILE SHEET ═══════════════════════════════════════ -->
+    <!-- ═══ PROFILE SHEET (moved) ═══════════════════════════════════════ -->
     {#if sub === 'profile'}
-      <form method="POST" action="?/updateProfile" use:enhance={({ action, cancel }) => {
-        return async ({ result }) => {
-          if (result.type === 'success') {
-            profileSaved = true
-            setTimeout(() => { profileSaved = false }, 2000)
-          }
-        }
-      }} class="profile-form">
-        <div class="form-section">
-          <h3>基本資料</h3>
-          <div class="field">
-            <label for="display_name">顯示名稱 *</label>
-            <input
-              id="display_name"
-              name="display_name"
-              type="text"
-              bind:value={displayName}
-              required
-            />
-          </div>
-
-          <div class="field">
-            <label for="bio">簡介</label>
-            <textarea id="bio" name="bio" rows="3" bind:value={bio}></textarea>
-          </div>
-
-          <div class="field">
-            <label for="styles">風格標籤</label>
-            <input
-              id="styles"
-              name="styles"
-              type="text"
-              bind:value={stylesString}
-              placeholder='例：厚塗, 水彩風, 二次元'
-            />
-            <span class="hint">請使用逗號分隔標籤</span>
-          </div>
+      <div class="moved-note">
+        <h3>基本資料已移至編輯頁面</h3>
+        <p>為了更完整的名片預覽與即時編輯，基本資料請前往編輯介面進行編輯。</p>
+        <div style="margin-top:12px">
+          <a href="/dashboard/editor" class="btn primary">前往編輯名片</a>
         </div>
-
-        <div class="form-section">
-          <h3>聯絡方式</h3>
-          <div class="field-row">
-            <div class="field">
-              <label for="contact_email">Email</label>
-              <input
-                id="contact_email"
-                name="contact_email"
-                type="email"
-                bind:value={contactEmail}
-              />
-            </div>
-            <div class="field">
-              <label for="contact_discord">Discord</label>
-              <input
-                id="contact_discord"
-                name="contact_discord"
-                type="text"
-                bind:value={contactDiscord}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" class="btn primary">
-            {profileSaved ? '✓ 已儲存' : '儲存資料'}
-          </button>
-        </div>
-      </form>
+      </div>
 
     <!-- ═══ COMMISSION TYPES SHEET ═════════════════════════════ -->
     {:else if sub === 'types'}

@@ -26,6 +26,7 @@
 
   const navItems = [
     { href: "/dashboard",          label: "收件匣", iconKey: "Inbox" },
+    { href: "/dashboard/editor",   label: "編輯",   iconKey: "Image" },
     { href: "/dashboard/queue",    label: "排單",   iconKey: "ClipboardList" },
     { href: "/dashboard/works",    label: "作品",   iconKey: "Image" },
     { href: "/dashboard/manage",   label: "管理",   iconKey: "SlidersHorizontal" },

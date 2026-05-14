@@ -18,6 +18,8 @@ export async function validateArtistSession(request: Request, env: Env): Promise
   const cookies = parseCookies(request.headers.get("cookie") ?? "")
   const token = cookies.get("session")
   if (!token) return false
+  // In dev or if KV is not available, return false
+  if (!env?.KV) return false
   const val = await env.KV.get(`session:${token}`)
   return !!val
 }

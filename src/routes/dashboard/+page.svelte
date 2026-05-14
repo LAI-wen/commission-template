@@ -9,6 +9,8 @@
   const active = $derived(data.active)
   const notifications = $derived((data as any).notifications ?? [])
   const unreadCount = $derived((data as any).unreadCount ?? 0)
+  const anonMessages = $derived((data as any).anonMessages ?? [])
+  const unreadAnonCount = $derived((data as any).unreadAnonCount ?? 0)
 </script>
 
 <h2 class="inbox-title">收件匣</h2>
@@ -46,6 +48,42 @@
               </form>
             {/if}
           </div>
+        </article>
+      {/each}
+    </div>
+  {/if}
+</section>
+
+<section class="notice-panel" style="margin-bottom:2rem;">
+  <div class="notice-head">
+    <p class="section-label">匿名訊息 {#if unreadAnonCount > 0}（{unreadAnonCount}）{/if}</p>
+    {#if unreadAnonCount > 0}
+      <form method="POST" action="?/markAllAnonRead" use:enhance>
+        <button class="tiny-btn" type="submit">全部設為已讀</button>
+      </form>
+    {/if}
+  </div>
+  {#if anonMessages.length === 0}
+    <p class="empty-state">目前沒有匿名訊息</p>
+  {:else}
+    <div class="notify-list">
+      {#each anonMessages as msg}
+        <article class="notify-item" class:read={msg.is_read === 1}>
+          <div class="notify-top">
+            <div>
+              <div class="notify-body" style="white-space:pre-wrap;">{msg.content}</div>
+              <div style="font-size:.7rem;opacity:.5;margin-top:.25rem;">{new Date(msg.created_at * 1000).toLocaleString('zh-TW')}</div>
+            </div>
+            <span class="notify-dot" class:unread={msg.is_read === 0}></span>
+          </div>
+          {#if msg.is_read === 0}
+            <div class="notify-actions">
+              <form method="POST" action="?/markAnonRead" use:enhance>
+                <input type="hidden" name="id" value={msg.id} />
+                <button class="notify-read" type="submit">標記已讀</button>
+              </form>
+            </div>
+          {/if}
         </article>
       {/each}
     </div>

@@ -145,6 +145,8 @@ const ALTER_COLUMNS = [
 ]
 
 export async function ensureMigrated(env: Env): Promise<void> {
+  // Skip migration in dev if KV is not available
+  if (!env?.KV) return
   if (await env.KV.get(KV_KEY)) return
 
   // Create all tables (idempotent)
