@@ -1,41 +1,8 @@
-/**
- * For more details on how to configure Wrangler, refer to:
- * https://developers.cloudflare.com/workers/wrangler/configuration/
- */
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "commission-template",
-	"compatibility_date": "2026-05-08",
-	"compatibility_flags": [
-		"nodejs_compat",
-		"nodejs_als"
-	],
-	"pages_build_output_dir": ".svelte-kit/cloudflare",
-	"observability": {
-		"enabled": true
-	},
-	"upload_source_maps": true,
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "commission-db",
-			"database_id": "28853462-380a-443d-a59b-bced644238ab"
-		}
-	],
-	"r2_buckets": [
-		{
-			"binding": "R2",
-			"bucket_name": "commission-assets"
-		}
-	],
-	"kv_namespaces": [
-		{
-			"binding": "KV",
-			"id": "f24ba35a3d804d9a969f605419376bb9"
-		}
-	],
-	"vars": {
-		"ORIGIN": "http://localhost:5173",
-		"EMAIL_DOMAIN": "resend.dev"
-	}
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "commission-template",
+  "compatibility_date": "2026-05-08",
+  "compatibility_flags": ["nodejs_compat", "nodejs_als"],
+  "pages_build_output_dir": ".svelte-kit/cloudflare",
+  "observability": { "enabled": true }
 }
