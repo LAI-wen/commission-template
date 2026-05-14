@@ -10,7 +10,7 @@ declare global {
   interface Env extends Cloudflare.Env {
     DB: D1Database
     KV: KVNamespace
-    R2: R2Bucket
+    R2?: R2Bucket
     DASHBOARD_PASSWORD: string
     SESSION_SECRET: string
     ORIGIN: string
