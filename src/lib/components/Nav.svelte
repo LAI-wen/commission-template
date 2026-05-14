@@ -37,7 +37,7 @@
       {#if isArtist}
         <a href="/dashboard" class="nav-artist active" onclick={() => menuOpen = false}>後台 →</a>
       {:else}
-        <a href="/api/auth" class="nav-artist" onclick={() => menuOpen = false}>登入</a>
+        <a href="/dashboard/login" class="nav-artist" onclick={() => menuOpen = false}>登入</a>
       {/if}
     </div>
 
