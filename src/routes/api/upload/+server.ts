@@ -28,7 +28,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
       const res = await fetch(`${env.HUB_URL}/api/upload`, {
         method: "POST",
-        headers: { "x-hub-token": creator.hub_token },
+        headers: { "x-hub-token": creator.hub_token as string, "origin": env.HUB_URL },
         body: hubForm,
         signal: AbortSignal.timeout(15000),
       })

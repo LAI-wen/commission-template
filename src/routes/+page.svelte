@@ -1,16 +1,18 @@
 <script lang="ts">
   import type { PageData } from "./$types"
   import CardPreview from "$lib/components/CardPreview.svelte"
+  import { DEFAULT_GLOBAL } from "$lib/components/editor/globalDesign"
+  import type { GlobalDesign } from "$lib/components/editor/globalDesign"
 
   let { data }: { data: PageData } = $props()
 
-  function parseServerConfig(): { blocks: any[]; overrides: Record<string, any> } | null {
+  function parseServerConfig(): { blocks: any[]; overrides: Record<string, any>; globalDesign?: GlobalDesign } | null {
     try {
       const raw = data.creator?.page_config
       if (!raw) return null
       const p = JSON.parse(raw as string)
       if (Array.isArray(p.blocks) && typeof p.overrides === "object") {
-        return { blocks: p.blocks, overrides: p.overrides || {} }
+        return { blocks: p.blocks, overrides: p.overrides || {}, globalDesign: p.globalDesign }
       }
     } catch {}
     return null
@@ -19,22 +21,43 @@
   const serverConfig = parseServerConfig()
   let editorBlocks = $state<any[]>(serverConfig?.blocks ?? [])
   let editorOverrides = $state<Record<string, any>>(serverConfig?.overrides ?? {})
+  let editorGlobal = $state<GlobalDesign>({ ...DEFAULT_GLOBAL, ...(serverConfig?.globalDesign ?? {}) })
   let hasConfig = $state(!!serverConfig)
 
   $effect(() => {
     try {
       const lb = localStorage.getItem("card_blocks")
       const lo = localStorage.getItem("card_overrides")
+      const lg = localStorage.getItem("card_global")
       if (lb) {
         const blocks = JSON.parse(lb)
         if (Array.isArray(blocks) && blocks.length > 0) {
           editorBlocks = blocks
           editorOverrides = lo ? JSON.parse(lo) : {}
+          if (lg) editorGlobal = { ...DEFAULT_GLOBAL, ...JSON.parse(lg) }
           hasConfig = true
         }
       }
     } catch {}
   })
+
+  const pageBgStyle = $derived(
+    [
+      `background-color:${editorGlobal.bgColor}`,
+      editorGlobal.bgImage ? `background-image:url('${editorGlobal.bgImage}')` : '',
+      `background-size:${editorGlobal.bgSize}`,
+      `background-repeat:${editorGlobal.bgRepeat}`,
+      `background-attachment:${editorGlobal.bgAttachment}`,
+      `background-position:center`,
+      `filter:brightness(${editorGlobal.bgBrightness}%) blur(${editorGlobal.bgBlur}px) saturate(${editorGlobal.bgSaturation}%)`,
+    ].filter(Boolean).join(';')
+  )
+
+  const cardWrapStyle = $derived(
+    editorGlobal.layoutWidth === 'full'
+      ? 'max-width:1200px;padding-left:2rem;padding-right:2rem;'
+      : ''
+  )
 
   const displayName = $derived(() => {
     const n = data.creator?.display_name
@@ -47,12 +70,16 @@
 
 <svelte:head>
   <title>{displayName()}</title>
+  {#if editorGlobal.fontUrl}
+    <link rel="stylesheet" href={editorGlobal.fontUrl} />
+  {/if}
 </svelte:head>
 
-<div class="page-root">
+<div class="page-root" style="font-family:{editorGlobal.fontFamily};">
+  <div class="page-bg" aria-hidden="true" style={pageBgStyle}></div>
   {#if hasConfig && editorBlocks.length > 0}
-    <div class="card-wrap">
-      <CardPreview blocks={editorBlocks} overrides={editorOverrides} />
+    <div class="card-wrap" style={cardWrapStyle}>
+      <CardPreview blocks={editorBlocks} overrides={editorOverrides} globalDesign={editorGlobal} />
     </div>
   {:else}
     <div class="empty-state">
@@ -77,17 +104,30 @@
 <style>
 .page-root {
   min-height: 100vh;
-  background: var(--cream);
   position: relative;
 }
 
+.page-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-size: cover;
+  background-position: center;
+  transition: filter .4s, background-color .4s;
+}
+
 .card-wrap {
+  position: relative;
+  z-index: 1;
   max-width: 520px;
   margin: 0 auto;
   padding: 2rem 1.25rem 5rem;
 }
 
 .empty-state {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;

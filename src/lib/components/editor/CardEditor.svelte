@@ -1,28 +1,32 @@
 <script lang="ts">
+  import GlobalDesignPanel from './GlobalDesignPanel.svelte'
+  import { DEFAULT_GLOBAL } from './globalDesign'
+  import type { GlobalDesign } from './globalDesign'
+
   type StyleMap = {
     bgColor?: string; textColor?: string; borderColor?: string
     borderStyle?: string; borderWidth?: string; radius?: string; opacity?: number
   }
   type Block = { id: string; type: string; data: Record<string, any> }
 
-  // ── 色票（對應站內 CSS vars）──
-  const PALETTE = [
-    { bg: 'var(--ink)',      label: 'ink' },
-    { bg: 'var(--blue)',     label: 'blue' },
-    { bg: 'var(--cream)',    label: 'cream' },
-    { bg: 'var(--lavender)', label: 'lavender' },
-    { bg: '#ffffff',         label: 'white' },
-  ]
+  // ── Global design ──
+  let globalDesign = $state<GlobalDesign>({ ...DEFAULT_GLOBAL })
+  let globalOpen   = $state(false)
+  let bgUploading  = $state(false)
 
-  const THEME: Required<StyleMap> = {
-    bgColor:     'var(--ink)',
-    textColor:   '#ffffff',
-    borderColor: '#ffffff',
-    borderStyle: 'double',
-    borderWidth: '1px',
-    radius:      '32px',
-    opacity:     55,
-  }
+  const THEME = $derived<Required<StyleMap>>({
+    bgColor:     globalDesign.bgBlockColor,
+    textColor:   globalDesign.textColor,
+    borderColor: globalDesign.borderColor,
+    borderStyle: globalDesign.borderStyle,
+    borderWidth: globalDesign.borderWidth,
+    radius:      globalDesign.radius,
+    opacity:     globalDesign.bgBlockOpacity,
+  })
+
+  const PALETTE = $derived(
+    globalDesign.palette.map((bg, i) => ({ bg, label: `color-${i}` }))
+  )
 
   // ── State ──
   let blocks = $state<Block[]>([
@@ -53,8 +57,10 @@
     try {
       const sb = localStorage.getItem('card_blocks')
       const so = localStorage.getItem('card_overrides')
+      const sg = localStorage.getItem('card_global')
       if (sb) blocks = JSON.parse(sb)
       if (so) overrides = JSON.parse(so)
+      if (sg) globalDesign = { ...DEFAULT_GLOBAL, ...JSON.parse(sg) }
     } catch {}
     const iv = setInterval(() => cdTick++, 1000)
     return () => clearInterval(iv)
@@ -191,17 +197,34 @@
     setTimeout(() => { toasts = toasts.filter(t => t.id !== id) }, 2100)
   }
 
+  // ── 背景圖片上傳 ──
+  async function uploadBgImage(file: File) {
+    bgUploading = true
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      if (!res.ok) { toast('上傳失敗'); return }
+      const { url } = await res.json() as { url: string }
+      globalDesign = { ...globalDesign, bgImage: url }
+      toast('✓ 背景圖片已上傳')
+    } catch { toast('上傳失敗') }
+    finally { bgUploading = false }
+  }
+
   // ── 儲存 ──
   function saveAll() {
     try {
       // 保存到 localStorage
       localStorage.setItem('card_blocks', JSON.stringify(blocks))
       localStorage.setItem('card_overrides', JSON.stringify(overrides))
-      
+      localStorage.setItem('card_global', JSON.stringify(globalDesign))
+
       // 準備配置對象
       const config = {
         blocks,
         overrides,
+        globalDesign,
         timestamp: Date.now(),
       }
       
@@ -225,11 +248,16 @@
     } catch { toast('儲存失敗') }
   }
 
+  // ── 全局設計面板 ──
+  function openGlobal() { selectedId = null; globalOpen = true }
+  function closeGlobal() { globalOpen = false }
+
   // ── 點空白取消選取 ──
   function clickOut(e: MouseEvent) {
     const t = e.target as Element
-    if (!t.closest('.block-wrap') && !t.closest('.attr-panel') && !t.closest('.add-panel')) {
+    if (!t.closest('.block-wrap') && !t.closest('.attr-panel') && !t.closest('.add-panel') && !t.closest('.gd-panel')) {
       if (selectedId) selectedId = null
+      if (globalOpen) globalOpen = false
     }
   }
 
@@ -263,10 +291,19 @@
 </div>
 
 <!-- ── 主預覽區 ── -->
-<div class="editor-root">
-  <div class="editor-bg" aria-hidden="true"></div>
+<div class="editor-root" style="font-family:{globalDesign.fontFamily};">
+  <div class="editor-bg" aria-hidden="true" style="
+    background-color:{globalDesign.bgColor};
+    {globalDesign.bgImage ? `background-image:url('${globalDesign.bgImage}');` : ''}
+    background-size:{globalDesign.bgSize};
+    background-repeat:{globalDesign.bgRepeat};
+    background-attachment:{globalDesign.bgAttachment};
+    background-position:center;
+    filter:brightness({globalDesign.bgBrightness}%) blur({globalDesign.bgBlur}px) saturate({globalDesign.bgSaturation}%);
+    opacity:1;
+  "></div>
 
-  <div class="preview-wrap" class:mobile={device === 'mobile'}>
+  <div class="preview-wrap" class:mobile={device === 'mobile'} class:full-width={globalDesign.layoutWidth==='full'}>
     <ul class="blocks-list">
       {#each blocks as block (block.id)}
         {@const s  = S(block.id)}
@@ -409,7 +446,7 @@
 </div>
 
 <!-- ── 右側 FABs ── -->
-<div class="fab-col" class:panel-open={!!selBlock}>
+<div class="fab-col" class:panel-open={!!selBlock || globalOpen}>
   <div class="device-toggle">
     <button class="dev-btn" class:dev-active={device==='desktop'} onclick={() => device='desktop'} title="桌機">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
@@ -418,6 +455,9 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg>
     </button>
   </div>
+  <button class="fab fab-design" onclick={openGlobal} title="全局設計" class:fab-active={globalOpen}>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+  </button>
   <button class="fab fab-save" onclick={saveAll} title="儲存">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>
   </button>
@@ -658,6 +698,17 @@
   </div>
 {/if}
 
+<!-- ── 全局設計面板 ── -->
+{#if globalOpen}
+  <GlobalDesignPanel
+    design={globalDesign}
+    onpatch={(patch) => globalDesign = { ...globalDesign, ...patch }}
+    onclose={closeGlobal}
+    uploading={bgUploading}
+    onupload={uploadBgImage}
+  />
+{/if}
+
 <!-- ── 新增元件 Panel ── -->
 {#if addOpen}
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
@@ -717,8 +768,8 @@
   }
   .editor-bg {
     position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background-image: url('https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?w=800&auto=format&fit=crop&q=60');
-    background-size: cover; background-position: center; opacity: .18;
+    background-size: cover; background-position: center;
+    transition: filter .4s, background-color .4s;
   }
 
   /* Preview */
@@ -727,6 +778,7 @@
     padding: 5rem 1.25rem; transition: max-width .5s;
   }
   .preview-wrap.mobile { max-width: 480px; }
+  .preview-wrap.full-width { max-width: 1200px; padding-left: 2rem; padding-right: 2rem; }
   .blocks-list { display: flex; flex-direction: column; gap: 1.5rem; padding-bottom: 8rem; list-style: none; margin: 0; padding-left: 0; }
 
   /* Block wrap */
@@ -803,8 +855,10 @@
   .fab { width: 3.5rem; height: 3.5rem; border-radius: 999px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; transition: all .15s; box-shadow: 0 8px 24px rgba(0,0,0,.15); }
   .fab:hover { transform: scale(1.05); }
   .fab:active { transform: scale(.95); }
-  .fab-save { background: var(--ink); }
-  .fab-add  { background: var(--blue); }
+  .fab-save   { background: var(--ink); }
+  .fab-add    { background: var(--blue); }
+  .fab-design { background: color-mix(in srgb,var(--ink) 75%,var(--blue)); }
+  .fab-design.fab-active { background: var(--blue); box-shadow: 0 0 0 3px color-mix(in srgb,var(--blue) 30%,transparent), 0 8px 24px rgba(0,0,0,.15); }
 
   /* Attr panel */
   @keyframes slideLeft { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }

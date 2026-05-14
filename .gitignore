@@ -27,3 +27,6 @@ docs/
 
 .dev.vars*
 !.dev.vars.example
+
+# local reference images
+圖片參考/

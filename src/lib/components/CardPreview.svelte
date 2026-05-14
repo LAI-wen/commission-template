@@ -1,4 +1,6 @@
 <script lang="ts">
+  import type { GlobalDesign } from '$lib/components/editor/globalDesign'
+
   type Block = { id: string; type: string; data: Record<string, any> }
   type StyleMap = {
     bgColor?: string; textColor?: string; borderColor?: string
@@ -9,19 +11,20 @@
     blocks: Block[]
     overrides?: Record<string, StyleMap>
     device?: 'mobile' | 'desktop'
+    globalDesign?: GlobalDesign | null
   }
 
-  let { blocks = [], overrides = {}, device = 'desktop' }: Props = $props()
+  let { blocks = [], overrides = {}, device = 'desktop', globalDesign = null }: Props = $props()
 
-  const THEME: Required<StyleMap> = {
-    bgColor: 'var(--ink)',
-    textColor: '#ffffff',
-    borderColor: '#ffffff',
-    borderStyle: 'double',
-    borderWidth: '1px',
-    radius: '32px',
-    opacity: 55,
-  }
+  const THEME = $derived<Required<StyleMap>>({
+    bgColor:     globalDesign?.bgBlockColor  ?? 'var(--ink)',
+    textColor:   globalDesign?.textColor     ?? '#ffffff',
+    borderColor: globalDesign?.borderColor   ?? '#ffffff',
+    borderStyle: globalDesign?.borderStyle   ?? 'double',
+    borderWidth: globalDesign?.borderWidth   ?? '1px',
+    radius:      globalDesign?.radius        ?? '32px',
+    opacity:     globalDesign?.bgBlockOpacity ?? 55,
+  })
 
   function S(id: string): Required<StyleMap> {
     return { ...THEME, ...(overrides[id] ?? {}) } as Required<StyleMap>
