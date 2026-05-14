@@ -5,41 +5,37 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "commission-template",
-	"main": ".svelte-kit/cloudflare/_worker.js",
 	"compatibility_date": "2026-05-08",
 	"compatibility_flags": [
 		"nodejs_compat",
 		"nodejs_als"
 	],
-	"assets": {
-		"binding": "ASSETS",
-		"directory": ".svelte-kit/cloudflare"
-	},
+	"pages_build_output_dir": ".svelte-kit/cloudflare",
 	"observability": {
 		"enabled": true
 	},
-	"upload_source_maps": true
-	/**
-	 * Smart Placement
-	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
-	 */
-	// "placement": {  "mode": "smart" }
-	/**
-	 * Bindings
-	 * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
-	 * databases, object storage, AI inference, real-time communication and more.
-	 * https://developers.cloudflare.com/workers/runtime-apis/bindings/
-	 */
-	/**
-	 * Environment Variables
-	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
-	 * Note: Use secrets to store sensitive data.
-	 * https://developers.cloudflare.com/workers/configuration/secrets/
-	 */
-	// "vars": {  "MY_VARIABLE": "production_value" }
-	/**
-	 * Service Bindings (communicate between multiple Workers)
-	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
-	 */
-	// "services": [  {   "binding": "MY_SERVICE",   "service": "my-service"  } ]
+	"upload_source_maps": true,
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "commission-db",
+			"database_id": "28853462-380a-443d-a59b-bced644238ab"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "R2",
+			"bucket_name": "commission-assets"
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "KV",
+			"id": "f24ba35a3d804d9a969f605419376bb9"
+		}
+	],
+	"vars": {
+		"ORIGIN": "http://localhost:5173",
+		"EMAIL_DOMAIN": "resend.dev"
+	}
 }

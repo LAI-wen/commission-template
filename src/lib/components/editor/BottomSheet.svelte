@@ -70,7 +70,20 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 {#if open}
-  <div class="overlay" onclick={() => { open = false; onClose?.() }}></div>
+  <div
+    class="overlay"
+    role="button"
+    tabindex="0"
+    aria-label="關閉底部設定面板"
+    onclick={() => { open = false; onClose?.() }}
+    onkeydown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault()
+        open = false
+        onClose?.()
+      }
+    }}
+  ></div>
 {/if}
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->

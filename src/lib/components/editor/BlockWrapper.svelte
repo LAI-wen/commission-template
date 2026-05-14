@@ -6,9 +6,8 @@
     visible?: boolean
     editing?: boolean
     onSelect?: () => void
-    onAction?: (action: 'toggle-visible' | 'delete' | 'edit') => void
-    children?: import('svelte').Snippet
-    // Drag & Drop props
+    onAction?: (action: "toggle-visible" | "delete" | "edit") => void
+    children?: import("svelte").Snippet
     dragOver?: boolean
     onDragStart?: (e: DragEvent) => void
     onDragOver?: (e: DragEvent) => void
@@ -17,61 +16,44 @@
   }
 
   let {
-    id,
-    type,
+    id, type,
     selected = false,
     visible = true,
     editing = false,
-    onSelect,
-    onAction,
-    children,
+    onSelect, onAction, children,
     dragOver = false,
-    onDragStart,
-    onDragOver,
-    onDrop,
-    onDragEnd
+    onDragStart, onDragOver, onDrop, onDragEnd,
   }: Props = $props()
 
   let longPressTimer: ReturnType<typeof setTimeout> | null = null
 
   function handlePointerDown(e: PointerEvent) {
     if (!editing) return
-    
-    // Start long press timer for mobile
     longPressTimer = setTimeout(() => {
       if (window.navigator.vibrate) window.navigator.vibrate(50)
-      onAction?.('edit')
+      onAction?.("edit")
     }, 400)
   }
 
   function handlePointerUp() {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer)
-      longPressTimer = null
-    }
+    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null }
   }
 
   function handleDoubleClick() {
-    if (editing) {
-      onAction?.('edit')
-    }
+    if (editing) onAction?.("edit")
   }
 
   function handleClick(e: MouseEvent) {
-    if (editing) {
-      e.stopPropagation()
-      onSelect?.()
-    }
+    if (editing) { e.stopPropagation(); onSelect?.() }
   }
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
 <div
-  class="block-wrapper"
+  class="block-wrap"
   class:editing
   class:selected
-  class:visible
+  class:invisible={!visible && editing}
   class:drag-over={dragOver}
   draggable={editing}
   onclick={handleClick}
@@ -85,148 +67,147 @@
   ondrop={onDrop}
   ondragend={onDragEnd}
 >
+  <!-- 拖拉把手 + 工具列（僅編輯模式） -->
   {#if editing}
-    <div class="block-tools">
-      <div class="tool-handle" title="拖曳排序">⠿</div>
+    <div class="tools-wrap">
+      <!-- ⠿ 把手 -->
+      <div class="drag-handle" title="拖曳排序">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9"  cy="5"  r="1" fill="currentColor"/>
+          <circle cx="9"  cy="12" r="1" fill="currentColor"/>
+          <circle cx="9"  cy="19" r="1" fill="currentColor"/>
+          <circle cx="15" cy="5"  r="1" fill="currentColor"/>
+          <circle cx="15" cy="12" r="1" fill="currentColor"/>
+          <circle cx="15" cy="19" r="1" fill="currentColor"/>
+        </svg>
+      </div>
+
+      <!-- 操作按鈕群 -->
       <div class="tool-group">
-        <button 
-          class="tool-btn" 
-          onclick={(e) => { e.stopPropagation(); onAction?.('toggle-visible') }}
+        <button
+          class="tool-btn"
+          onclick={(e) => { e.stopPropagation(); onAction?.("toggle-visible") }}
           title={visible ? "隱藏" : "顯示"}
         >
           {visible ? "👁" : "🚫"}
         </button>
         {#if type !== "profile"}
-          <button 
-            class="tool-btn danger" 
-            onclick={(e) => { e.stopPropagation(); onAction?.('delete') }}
+          <button
+            class="tool-btn tool-btn--danger"
+            onclick={(e) => { e.stopPropagation(); onAction?.("delete") }}
             title="刪除"
-          >
-            ✕
-          </button>
+          >✕</button>
         {/if}
       </div>
     </div>
   {/if}
 
-  <div class="block-content" class:hidden={!visible && editing}>
+  <!-- 內容 -->
+  <div class="block-content" class:faded={!visible && editing}>
     {@render children?.()}
   </div>
 </div>
 
 <style>
-  /* Outer wrapper — no visible style, just layout */
-  .block-wrapper {
+  /* ── 基礎 ── */
+  .block-wrap {
     position: relative;
-    height: 100%;
+    margin-bottom: 2px;
   }
 
-  /* Inner card appearance when in editing mode */
-  .block-wrapper.editing {
+  /* ── 編輯模式 ── */
+  .block-wrap.editing {
     cursor: pointer;
-    background: var(--white);
-    border: var(--border);
-    box-shadow: var(--shadow-md);
-    height: 100%;
-    overflow: hidden;
-    transition: transform 0.08s, box-shadow 0.08s;
-    padding: 12px 12px 12px 40px;
-    margin-bottom: 8px;
+    padding-left: 36px;   /* 為 drag handle 騰出空間 */
+    padding-top: 2px;
+    padding-bottom: 2px;
+    transition: outline 0.12s;
   }
 
-  .block-wrapper.editing:hover {
-    transform: translate(-1px, -1px);
-    box-shadow: 5px 5px 0 var(--ink);
+  /* ── 選中狀態 ── */
+  .block-wrap.editing.selected {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
   }
 
-  /* Selected state */
-  .block-wrapper.editing.selected {
-    border-color: var(--blue);
-    box-shadow: 0 0 0 3px var(--blue), var(--shadow-md);
+  /* ── 拖拉 over ── */
+  .block-wrap.drag-over {
+    outline: 2px solid var(--gold) !important;
+    outline-offset: 2px;
   }
 
-  /* Drag-over state */
-  .block-wrapper.drag-over {
-    border-color: var(--gold) !important;
-    box-shadow: 0 0 0 3px var(--gold), var(--shadow-md) !important;
-  }
+  /* ── 隱藏中 ── */
+  .invisible { opacity: 0.4; }
+  .block-content.faded { opacity: 0.35; }
 
-  /* Control bar overlay container */
-  .block-tools {
+  /* ── 工具列容器 ── */
+  .tools-wrap {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    z-index: 10;
+    z-index: 20;
   }
 
-  /* Drag handle */
-  .tool-handle {
+  /* ── 拖拉把手 ── */
+  .drag-handle {
     position: absolute;
-    left: 8px;
+    left: 4px;
     top: 50%;
     transform: translateY(-50%);
-    width: 24px;
-    height: 32px;
+    width: 26px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--ink);
-    opacity: 0.3;
-    font-size: 18px;
+    opacity: 0.2;
     cursor: grab;
     pointer-events: auto;
     user-select: none;
+    transition: opacity 0.15s;
   }
-  .tool-handle:active { cursor: grabbing; }
+  .block-wrap:hover .drag-handle,
+  .block-wrap.selected .drag-handle {
+    opacity: 0.55;
+  }
+  .drag-handle:active { cursor: grabbing; opacity: 0.9; }
 
-  /* Control button group */
+  /* ── 操作按鈕群 ── */
   .tool-group {
     position: absolute;
-    top: -1px;
-    right: -1px;
+    top: 0;
+    right: 0;
     display: flex;
-    gap: 2px;
     background: var(--blue);
     border: 1px solid var(--ink);
-    padding: 3px 6px;
-    z-index: 10;
-    opacity: 0;
-    transform: translateY(4px);
-    transition: all 0.15s;
+    padding: 2px 4px;
+    gap: 2px;
     pointer-events: auto;
+    /* 預設隱藏，hover / selected 才顯示 */
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: opacity 0.15s, transform 0.15s;
   }
-
-  .block-wrapper.selected .tool-group,
-  .block-wrapper.editing:hover .tool-group {
+  .block-wrap:hover .tool-group,
+  .block-wrap.selected .tool-group {
     opacity: 1;
     transform: translateY(0);
   }
 
-  /* Control buttons */
   .tool-btn {
     background: none;
     border: none;
     color: var(--white);
     cursor: pointer;
-    font-size: 12px;
-    padding: 2px 4px;
-    opacity: 0.8;
+    font-size: 11px;
+    padding: 2px 5px;
+    opacity: 0.85;
     transition: opacity 0.1s;
     display: flex;
     align-items: center;
     justify-content: center;
+    line-height: 1;
   }
-
   .tool-btn:hover { opacity: 1; }
-
-  .tool-btn.danger:hover {
-    color: var(--red);
-  }
-
-  .block-content {
-    transition: opacity 0.2s;
-  }
-  .block-content.hidden {
-    opacity: 0.35;
-  }
+  .tool-btn--danger:hover { color: var(--red); }
 </style>

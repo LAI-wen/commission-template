@@ -1,13 +1,55 @@
 <script lang="ts">
   import type { Commission } from "$lib/db"
 
-  let { commission, showActions = false }: {
+  let {
+    commission,
+    showActions = false,
+    typeName = null,
+    acceptTemplate = null,
+    rejectTemplate = null,
+  }: {
     commission: Commission
     showActions?: boolean
+    typeName?: string | null
+    acceptTemplate?: string | null
+    rejectTemplate?: string | null
   } = $props()
 
-  let showRejectForm = $state(false)
-  let note = $state("")
+  /* ── modal state ── */
+  type ModalMode = 'accept' | 'reject' | null
+  let modal = $state<ModalMode>(null)
+  let noteText = $state("")
+
+  function openModal(mode: ModalMode) {
+    modal = mode
+    if (mode === 'accept') {
+      noteText = acceptTemplate ?? defaultAcceptNote()
+    } else if (mode === 'reject') {
+      noteText = rejectTemplate ?? defaultRejectNote()
+    }
+  }
+
+  function defaultAcceptNote() {
+    return `親愛的 ${commission.client_name}，
+
+感謝您的委託申請！很開心能夠接受您的委託。
+
+我會盡快聯繫您確認細節，並在開始作業後通知您進度。如有任何問題，請隨時回覆此郵件。
+
+期待與您合作！`
+  }
+
+  function defaultRejectNote() {
+    return `親愛的 ${commission.client_name}，
+
+感謝您對我作品的支持與委託申請。
+
+很遺憾目前無法接受您的委託，可能原因包括檔期已滿或委託類型不符合目前的創作方向。
+
+歡迎未來持續關注，期待下次有機會合作。謝謝！`
+  }
+
+  let formEl = $state<HTMLFormElement | null>(null)
 
   const statusLabel: Record<string, string> = {
     pending: "待確認",
@@ -49,42 +91,77 @@
 
   {#if showActions && commission.status === "pending"}
     <div class="actions">
-      {#if !showRejectForm}
-        <form method="POST" action="?/accept" class="inline-form">
-          <input type="hidden" name="id" value={commission.id} />
-          <input type="hidden" name="note" value="" />
-          <button type="submit" class="btn-accept">接受委託</button>
-        </form>
-        <button
-          class="btn-reject-toggle"
-          onclick={() => (showRejectForm = true)}
-        >
-          拒絕
-        </button>
-      {:else}
-        <form method="POST" action="?/reject" class="reject-form">
-          <input type="hidden" name="id" value={commission.id} />
-          <textarea
-            name="note"
-            bind:value={note}
-            placeholder="拒絕原因（會寄給委託人）"
-            rows="2"
-          ></textarea>
-          <div class="reject-actions">
-            <button type="submit" class="btn-reject">確認拒絕</button>
-            <button
-              type="button"
-              class="btn-cancel"
-              onclick={() => (showRejectForm = false)}
-            >
-              取消
-            </button>
-          </div>
-        </form>
-      {/if}
+      <button class="btn-accept" onclick={() => openModal('accept')}>接受委託</button>
+      <button class="btn-reject-toggle" onclick={() => openModal('reject')}>拒絕</button>
     </div>
   {/if}
 </div>
+
+<!-- ── Email Modal ── -->
+{#if modal !== null}
+  <div
+    class="modal-backdrop"
+    role="button"
+    tabindex="0"
+    aria-label="關閉郵件預覽視窗"
+    onclick={e => e.target === e.currentTarget && (modal = null)}
+    onkeydown={(e) => {
+      if (e.key === "Escape") {
+        modal = null
+      }
+      if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) {
+        e.preventDefault()
+        modal = null
+      }
+    }}
+  >
+    <div class="modal">
+      <div class="modal-head" class:accept={modal === 'accept'} class:reject={modal === 'reject'}>
+        <span class="modal-title">
+          {modal === 'accept' ? '✓ 寄送接受通知' : '✕ 寄送拒絕通知'}
+        </span>
+        <button class="modal-close" onclick={() => modal = null}>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-to">
+          <span class="to-label">收件人</span>
+          <span class="to-val mono">{commission.client_name} &lt;{commission.client_email}&gt;</span>
+        </div>
+        {#if typeName}
+          <div class="modal-to">
+            <span class="to-label">委託類型</span>
+            <span class="to-val">{typeName}</span>
+          </div>
+        {/if}
+        <div class="modal-to">
+          <span class="to-label">金額</span>
+          <span class="to-val mono">NT$ {commission.estimated_price.toLocaleString()}</span>
+        </div>
+        <div class="field-label">郵件內容</div>
+        <textarea
+          class="modal-textarea"
+          bind:value={noteText}
+          rows="8"
+        ></textarea>
+        <p class="modal-hint">此內容將附在系統通知郵件中寄送給委託人，並附上追蹤連結。</p>
+      </div>
+      <div class="modal-footer">
+        <form
+          method="POST"
+          action={modal === 'accept' ? '?/accept' : '?/reject'}
+          bind:this={formEl}
+        >
+          <input type="hidden" name="id"   value={commission.id} />
+          <input type="hidden" name="note" value={noteText} />
+          <button type="submit" class="modal-send" class:accept={modal === 'accept'} class:reject={modal === 'reject'}>
+            {modal === 'accept' ? '確認接受並寄出通知' : '確認拒絕並寄出通知'}
+          </button>
+        </form>
+        <button class="modal-cancel" onclick={() => modal = null}>取消</button>
+      </div>
+    </div>
+  </div>
+{/if}
 
 <style>
 .card {
@@ -178,7 +255,6 @@
   gap: 0;
   border-top: var(--border);
 }
-.inline-form { display: contents; }
 .btn-accept {
   flex: 1;
   padding: 0.6rem;
@@ -206,43 +282,126 @@
   transition: background 0.1s;
 }
 .btn-reject-toggle:hover { background: #fff0ef; }
-.reject-form { flex: 1; display: flex; flex-direction: column; gap: 0; }
-textarea {
-  padding: 0.6rem 0.875rem;
-  border: none;
-  border-top: var(--border);
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  resize: none;
+
+/* ── Modal ── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(21,22,45,0.6);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.modal {
   background: var(--white);
-  color: var(--ink);
+  border: var(--border);
+  box-shadow: 6px 6px 0 var(--ink);
   width: 100%;
-  outline: none;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
 }
-textarea:focus { background: #fff8f8; }
-.reject-actions { display: flex; }
-.btn-reject {
-  flex: 1;
-  padding: 0.55rem;
-  background: var(--red);
-  color: var(--white);
-  border: none;
-  border-top: var(--border);
-  border-right: var(--border);
-  font-family: var(--font-body);
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: var(--border);
 }
-.btn-cancel {
-  flex: 1;
-  padding: 0.55rem;
+.modal-head.accept { background: var(--blue); color: #fff; }
+.modal-head.reject { background: var(--red); color: #fff; }
+.modal-title { font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; }
+.modal-close {
   background: none;
   border: none;
-  border-top: var(--border);
+  color: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.7;
+  padding: 0;
+}
+.modal-close:hover { opacity: 1; }
+
+.modal-body { padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; }
+.modal-to {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.to-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(0,0,0,0.4);
+  width: 60px;
+  flex-shrink: 0;
+}
+.to-val { color: var(--ink); }
+.to-val.mono { font-family: var(--font-mono); font-size: 12px; }
+.field-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(0,0,0,0.5);
+  margin-top: 0.5rem;
+}
+.modal-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.65rem 0.75rem;
+  border: var(--border);
   font-family: var(--font-body);
-  font-size: 0.82rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  resize: vertical;
+  background: #fafaf8;
+  color: var(--ink);
+  outline: none;
+}
+.modal-textarea:focus { border-color: var(--blue); background: #fff; }
+.modal-hint {
+  font-size: 11px;
+  color: rgba(0,0,0,0.35);
+  margin: 0;
+  font-family: var(--font-mono);
+}
+
+.modal-footer {
+  padding: 0.75rem 1rem;
+  border-top: var(--border);
+  display: flex;
+  gap: 0.5rem;
+  background: #f9f8f4;
+}
+.modal-send {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: var(--border);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.08s;
+}
+.modal-send.accept { background: var(--blue); color: #fff; }
+.modal-send.reject { background: var(--red); color: #fff; }
+.modal-send:hover { transform: translate(-1px,-1px); box-shadow: var(--shadow-md); }
+.modal-cancel {
+  padding: 0.6rem 1rem;
+  background: none;
+  border: var(--border);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
   cursor: pointer;
   color: var(--color-text-secondary);
 }
+.modal-cancel:hover { background: rgba(0,0,0,0.04); }
 </style>

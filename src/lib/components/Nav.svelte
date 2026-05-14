@@ -1,6 +1,8 @@
 <script lang="ts">
   import { page } from "$app/state"
 
+  let { isArtist = false }: { isArtist?: boolean } = $props()
+
   const links = [
     { href: "/",          label: "首頁" },
     { href: "/works",     label: "作品集" },
@@ -32,6 +34,11 @@
         </a>
       {/each}
       <a href="/commission" class="nav-cta" onclick={() => menuOpen = false}>申請委託</a>
+      {#if isArtist}
+        <a href="/dashboard" class="nav-artist active" onclick={() => menuOpen = false}>後台 →</a>
+      {:else}
+        <a href="/api/auth" class="nav-artist" onclick={() => menuOpen = false}>登入</a>
+      {/if}
     </div>
 
     <button
@@ -124,6 +131,23 @@
     transform: translate(-1px, -1px);
     box-shadow: var(--shadow-md);
   }
+
+  .nav-artist {
+    margin-left: 0.5rem;
+    padding: 0.35rem 0.875rem;
+    background: none;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border-secondary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    transition: color 0.1s, border-color 0.1s;
+    white-space: nowrap;
+  }
+  .nav-artist:hover { color: var(--blue); border-color: var(--blue); }
+  .nav-artist.active { color: var(--blue); border-color: var(--blue); }
 
   .hamburger {
     display: none;

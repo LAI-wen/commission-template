@@ -2,8 +2,9 @@
   import favicon from '$lib/assets/favicon.svg';
   import Nav from '$lib/components/Nav.svelte';
   import { page } from '$app/state';
+  import type { LayoutData } from './$types';
 
-  let { children } = $props();
+  let { children, data }: { children: any; data: LayoutData } = $props();
 
   const isPublic = $derived(!page.url.pathname.startsWith('/dashboard'))
 </script>
@@ -13,7 +14,7 @@
 </svelte:head>
 
 {#if isPublic}
-  <Nav />
+  <Nav isArtist={data.isArtist} />
 {/if}
 
 {@render children()}
@@ -26,20 +27,23 @@
   }
 
   :global(:root) {
-    /* ACS Y2K Palette */
-    --blue:  #1F3FB8;
-    --red:   #E33D2C;
-    --white: #FFFFFF;
-    --ink:   #15162D;
-    --gold:  #E8B741;
-    --cream: #F4EBD9;
+    /* Y2K Palette — defaults (overridden by theme system via localStorage) */
+    --blue:       #276CE4;
+    --blue-deep:  #1747BB;
+    --red:        #E33D2C;
+    --white:      #FFFFFF;
+    --ink:        #1747BB;   /* = blue-deep; replaced #15162D for Y2K look */
+    --gold:       #E8B741;
+    --cream:      #FBF9F5;
+    --lavender:   #D0C5F4;
 
     /* Typography */
-    --font-display: 'Bowlby One', sans-serif;
-    --font-body:    'Space Grotesk', system-ui, sans-serif;
-    --font-mono:    'JetBrains Mono', monospace;
+    --font-display:    'Bowlby One', sans-serif;
+    --font-zh-display: 'Dela Gothic One', 'Noto Sans TC', sans-serif;
+    --font-body:       'Space Grotesk', 'Noto Sans TC', system-ui, sans-serif;
+    --font-mono:       'JetBrains Mono', monospace;
 
-    /* Shadows */
+    /* Shadows — use ink (= blue-deep) for Y2K hard-shadow look */
     --shadow-lg: 6px 6px 0 var(--ink);
     --shadow-md: 4px 4px 0 var(--ink);
     --shadow-sm: 2px 2px 0 var(--ink);
@@ -47,23 +51,24 @@
     /* Borders */
     --border: 2px solid var(--ink);
 
-    /* Legacy compat — many existing blocks still use these; they now map to ACS colours */
+    /* Legacy compat */
     --color-text-primary:       var(--ink);
-    --color-text-secondary:     #4a4b6a;
-    --color-text-tertiary:      #7a7b9a;
+    --color-text-secondary:     color-mix(in srgb, var(--ink) 65%, transparent);
+    --color-text-tertiary:      color-mix(in srgb, var(--ink) 45%, transparent);
     --color-text-success:       #15803d;
     --color-text-danger:        var(--red);
     --color-text-warning:       #92400e;
     --color-text-info:          var(--blue);
     --color-background-primary: var(--white);
-    --color-background-secondary: #f0f2ff;
+    --color-background-secondary: color-mix(in srgb, var(--blue) 8%, var(--white));
     --color-background-success: #dcfce7;
     --color-background-danger:  #fee2e2;
     --color-background-warning: #fef3c7;
-    --color-background-info:    #dbeafe;
+    --color-background-info:    color-mix(in srgb, var(--blue) 12%, var(--white));
     --color-border-primary:     var(--ink);
-    --color-border-secondary:   #9ba4d4;
-    --color-border-tertiary:    #c8cce8;
+    --color-border-secondary:   color-mix(in srgb, var(--ink) 35%, transparent);
+    --color-border-tertiary:    color-mix(in srgb, var(--ink) 18%, transparent);
+    --border-radius-sm: 2px;
     --border-radius-md: 4px;
     --border-radius-lg: 6px;
 
@@ -71,7 +76,7 @@
     font-size: 16px;
     line-height: 1.6;
     color: var(--ink);
-    background: var(--white);
+    background: var(--cream);
   }
 
   /* ── Global utility classes ── */

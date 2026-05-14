@@ -14,6 +14,7 @@
     "cf-typegen": "wrangler types ./src/worker-configuration.d.ts"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260508.1",
     "@sveltejs/adapter-auto": "^7.0.1",
     "@sveltejs/adapter-cloudflare": "^7.2.8",
     "@sveltejs/kit": "^2.57.0",
@@ -24,5 +25,15 @@
     "typescript": "^6.0.2",
     "vite": "^8.0.7",
     "wrangler": "^4.90.0"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.7.6",
+    "arctic": "^3.7.0",
+    "hono": "^4.12.18",
+    "lucide-svelte": "^1.0.1",
+    "nanoid": "^5.1.11",
+    "oslo": "^1.2.1",
+    "resend": "^6.12.3",
+    "zod": "^4.4.3"
   }
 }

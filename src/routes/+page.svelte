@@ -10,52 +10,48 @@
 
   let { data }: { data: PageData } = $props()
 
+  // ── 預設值 ──────────────────────────────────────────────
   const BLOCK_DEFAULTS: Record<string, any> = {
     BIO:        { title: { zh: "個人簡介", en: "Biography" }, width: 2 },
     STATUS:     { title: { zh: "接案狀態", en: "Availability" }, width: 1, queueCount: 3 },
     TOOLS:      { title: { zh: "創作工具", en: "Creative Tools" }, width: 3, tools: [{ name: "Procreate", category: "硬體", description: "主要繪圖工具", icon: "Tablet" }] },
     LINKS:      { title: { zh: "聯繫我", en: "Connect" }, width: 1, links: [{ label: "Email", url: "mailto:", icon: "Mail" }] },
     RESOURCES:  { title: { zh: "相關資源", en: "Resources" }, width: 1, resources: [{ name: "筆刷包", type: "Brushes", url: "#", isPro: true }] },
-    gallery:    { title: { zh: "精選作品", en: "Featured Works" }, width: 1, limit: 6, columns: 3 },
-    commission: { title: { zh: "委託項目", en: "Commissions" }, width: 3, limit: 6 },
-    pricing:    { title: { zh: "價格方案", en: "Pricing" }, width: 3, plans: [{ name: { zh: "標準方案", en: "Standard Plan" }, price: "NT$ 1,000", features: [{ zh: "項目一", en: "Item 1" }], recommended: false }] },
-    notice:     { text: { zh: "這是一則重要公告", en: "This is an important notice" }, icon: "📢", bgColor: "rgba(255,243,205,1)", closable: true, width: 3 },
-    reactions:  { emojis: ["❤️", "🌟", "🎨", "🍵"], width: 3 },
-    faq:        { items: [{ question: { zh: "問題一", en: "Question 1" }, answer: { zh: "回答一", en: "Answer 1" } }], width: 3 },
-    countdown:  { targetDate: new Date(Date.now() + 86400000 * 7).toISOString(), finishText: { zh: "時間已到！", en: "Time's up!" }, style: "minimal", width: 3 },
-    terms:      { content: { zh: "請輸入條款...", en: "Please enter terms..." }, collapsed: true, width: 3 },
-    text:       { content: { zh: "在這裡輸入文字...", en: "Enter text here..." }, align: "left", width: 3 },
-    image:      { urls: [], mode: "single", radius: 12, width: 3 },
-    button:     { label: { zh: "按鈕文字", en: "Button Text" }, url: "#", style: "solid", align: "center", fullWidth: false, width: 1 },
-    divider:    { style: "solid", thickness: 1, spacing: 16, width: 3 },
-    spacer:     { height: 24, width: 3 }
+    gallery:    { title: { zh: "精選作品", en: "Featured Works" }, limit: 6, columns: 3 },
+    commission: { title: { zh: "委託項目", en: "Commissions" }, limit: 6 },
+    pricing:    { title: { zh: "價格方案", en: "Pricing" }, plans: [{ name: { zh: "標準方案", en: "Standard" }, price: "NT$ 1,000", features: [{ zh: "項目一", en: "Item 1" }], recommended: false }] },
+    notice:     { text: { zh: "這是一則重要公告", en: "Important notice" }, icon: "📢", bgColor: "rgba(255,243,205,1)", closable: true },
+    reactions:  { emojis: ["❤️", "🌟", "🎨", "🍵"] },
+    faq:        { items: [{ question: { zh: "問題一", en: "Question 1" }, answer: { zh: "回答一", en: "Answer 1" } }] },
+    countdown:  { targetDate: new Date(Date.now() + 86400000 * 7).toISOString(), finishText: { zh: "時間已到！", en: "Time's up!" }, style: "minimal" },
+    terms:      { content: { zh: "請輸入條款...", en: "Please enter terms..." }, collapsed: true },
+    text:       { content: { zh: "在這裡輸入文字...", en: "Enter text here..." }, align: "left" },
+    image:      { urls: [], mode: "single", radius: 12 },
+    button:     { label: { zh: "按鈕文字", en: "Button Text" }, url: "#", style: "solid", align: "center", fullWidth: false },
+    section:    { title: { zh: "區段標題", en: "Section" } },
+    divider:    { style: "solid", thickness: 1, spacing: 16 },
+    spacer:     { height: 24 },
+    anonymous_box: { title: { zh: "匿名提問", en: "Ask Me" }, placeholder: { zh: "輸入你的問題...", en: "Type your question..." } },
   }
 
   const DEFAULT_BLOCKS: Block[] = [
-    { id: "b1", type: "BIO",       visible: true, width: 2, data: { ...BLOCK_DEFAULTS.BIO } },
-    { id: "b2", type: "STATUS",    visible: true, width: 1, data: { ...BLOCK_DEFAULTS.STATUS } },
-    { id: "b3", type: "TOOLS",     visible: true, width: 3, data: { ...BLOCK_DEFAULTS.TOOLS } },
-    { id: "b4", type: "LINKS",     visible: true, width: 1, data: { ...BLOCK_DEFAULTS.LINKS } },
-    { id: "b5", type: "RESOURCES", visible: true, width: 1, data: { ...BLOCK_DEFAULTS.RESOURCES } },
-    { id: "b6", type: "gallery",   visible: true, width: 1, data: { ...BLOCK_DEFAULTS.gallery } },
-    { id: "b7", type: "commission",visible: true, width: 3, data: { ...BLOCK_DEFAULTS.commission } },
+    { id: "b1", type: "BIO",        visible: true, data: { ...BLOCK_DEFAULTS.BIO } },
+    { id: "b2", type: "STATUS",     visible: true, data: { ...BLOCK_DEFAULTS.STATUS } },
+    { id: "b3", type: "gallery",    visible: true, data: { ...BLOCK_DEFAULTS.gallery } },
+    { id: "b4", type: "commission", visible: true, data: { ...BLOCK_DEFAULTS.commission } },
+    { id: "b5", type: "LINKS",      visible: true, data: { ...BLOCK_DEFAULTS.LINKS } },
   ]
 
   const DEFAULT_THEME: GlobalTheme = {
-    accentColor: "#C89B7B", bgColor: "#FBFBFA", textColor: "#37352F",
-    maxWidth: 1024, fontFamily: "system", bgBlur: 0, bgFixed: false,
-    supportBilingual: true, defaultLang: "zh"
-  }
-
-  const PALETTES = [
-    { id: "classic", label: "經典雅緻", bg: "#FBFBFA", text: "#37352F", accent: "#C89B7B" },
-    { id: "dark", label: "深夜靈感", bg: "#111111", text: "#ffffff", accent: "#ffffff" },
-    { id: "sakura", label: "春日櫻花", bg: "#fff5f7", text: "#5c3d42", accent: "#ff8da1" },
-    { id: "ocean", label: "靜謐海洋", bg: "#f0f9ff", text: "#1e3a8a", accent: "#3b82f6" },
-  ]
-
-  function applyPalette(p: typeof PALETTES[0]) {
-    theme.bgColor = p.bg; theme.textColor = p.text; theme.accentColor = p.accent; debouncedSave()
+    accentColor: "#276CE4",
+    bgColor: "#FBF9F5",
+    textColor: "#1747BB",
+    maxWidth: 640,          // 單欄預設寬度
+    fontFamily: "system",
+    bgBlur: 0,
+    bgFixed: false,
+    supportBilingual: true,
+    defaultLang: "zh",
   }
 
   function parseConfig(): { blocks: Block[]; theme: GlobalTheme } {
@@ -63,43 +59,47 @@
       const raw = data.creator?.page_config
       if (!raw) return { blocks: DEFAULT_BLOCKS, theme: DEFAULT_THEME }
       const p = JSON.parse(raw as string)
-      return { 
-        blocks: p.blocks ?? DEFAULT_BLOCKS, 
-        theme: { ...DEFAULT_THEME, ...(p.theme ?? {}) } 
+      return {
+        blocks: p.blocks ?? DEFAULT_BLOCKS,
+        theme: { ...DEFAULT_THEME, ...(p.theme ?? {}) },
       }
     } catch { return { blocks: DEFAULT_BLOCKS, theme: DEFAULT_THEME } }
   }
 
   const cfg = parseConfig()
-  let blocks = $state<Block[]>(untrack(() => cfg.blocks))
-  let theme  = $state<GlobalTheme>(untrack(() => cfg.theme))
+  let blocks     = $state<Block[]>(untrack(() => cfg.blocks))
+  let theme      = $state<GlobalTheme>(untrack(() => cfg.theme))
 
-  let isEditMode = $state(false)
-  let selectedId = $state<string | null>(null)
-  let sheetOpen  = $state(false)
-  let activeTab  = $state<"block" | "global">("global")
-  let saveStatus = $state<"" | "saving" | "saved">("")
+  // ── 編輯器狀態 ──────────────────────────────────────────
+  let isEditMode     = $state(false)
+  let selectedId     = $state<string | null>(null)
+  let sheetOpen      = $state(false)
+  let activeTab      = $state<"block" | "global">("global")
+  let saveStatus     = $state<"" | "saving" | "saved">("")
   let insertionIndex = $state<number | null>(null)
-  let showPicker = $state(false)
-  let visitorLang = $state<"zh" | "en">(theme.defaultLang)
+  let showPicker     = $state(false)
+  let visitorLang    = $state<"zh" | "en">(theme.defaultLang)
 
-  let dragSrcId = $state<string | null>(null)
+  let dragSrcId  = $state<string | null>(null)
   let dragOverId = $state<string | null>(null)
 
-  const creator = $derived(data.creator)
-  const works = $derived(data.works)
-  const types = $derived(data.types)
-  const isOpen = $derived(creator?.is_open === 1)
-  const styles = $derived.by(() => { try { return JSON.parse(String(creator?.styles ?? "[]")) } catch { return [] } })
+  // ── Derived ─────────────────────────────────────────────
+  const creator       = $derived(data.creator)
+  const works         = $derived(data.works)
+  const types         = $derived(data.types)
+  const isOpen        = $derived(creator?.is_open === 1)
+  const styles        = $derived.by(() => { try { return JSON.parse(String(creator?.styles ?? "[]")) } catch { return [] } })
   const selectedBlock = $derived(blocks.find(b => b.id === selectedId))
 
+  // Hero 輪播
   let heroSlide = $state(0)
   $effect(() => {
     if (works.length <= 1) { heroSlide = 0; return }
-    const t = setInterval(() => heroSlide++, 4000)
-    return () => clearInterval(t)
+    const timer = setInterval(() => heroSlide++, 4000)
+    return () => clearInterval(timer)
   })
 
+  // ── 儲存 ────────────────────────────────────────────────
   let saveTimer: any
   function debouncedSave() {
     saveStatus = ""
@@ -116,59 +116,91 @@
       })
       saveStatus = "saved"
     } catch { saveStatus = "" }
-    setTimeout(() => saveStatus = "", 2000)
+    setTimeout(() => saveStatus = "", 2500)
   }
 
+  // ── Block 操作 ──────────────────────────────────────────
   function addBlockAt(type: BlockType, index: number) {
     const id = crypto.randomUUID().slice(0, 8)
-    const newBlock: Block = { id, type, visible: true, width: BLOCK_DEFAULTS[type].width, data: { ...BLOCK_DEFAULTS[type] } }
+    const newBlock: Block = {
+      id, type, visible: true,
+      data: { ...(BLOCK_DEFAULTS[type] ?? {}) },
+    }
     blocks.splice(index, 0, newBlock)
     blocks = [...blocks]
-    selectedId = id; showPicker = false; activeTab = "block"; sheetOpen = true; debouncedSave()
+    selectedId = id
+    showPicker = false
+    activeTab = "block"
+    sheetOpen = true
+    debouncedSave()
   }
 
   function deleteBlock(id: string) {
-    if (!confirm("確定要刪除此區塊嗎？")) return
-    blocks = blocks.filter(b => b.id !== id); if (selectedId === id) selectedId = null; debouncedSave()
+    if (!confirm("確定要刪除此區塊？")) return
+    blocks = blocks.filter(b => b.id !== id)
+    if (selectedId === id) selectedId = null
+    debouncedSave()
   }
 
   function toggleVisible(id: string) {
-    blocks = blocks.map(b => b.id === id ? { ...b, visible: !b.visible } : b); debouncedSave()
+    blocks = blocks.map(b => b.id === id ? { ...b, visible: !b.visible } : b)
+    debouncedSave()
   }
 
   function updateBlockData(key: string, val: any) {
     if (!selectedId) return
-    blocks = blocks.map(b => b.id === selectedId ? { ...b, data: { ...b.data, [key]: val } } : b); debouncedSave()
+    blocks = blocks.map(b =>
+      b.id === selectedId ? { ...b, data: { ...b.data, [key]: val } } : b
+    )
+    debouncedSave()
   }
 
   function updateT(key: string, lang: "zh" | "en", val: string) {
     if (!selectedId || !selectedBlock) return
     const current = selectedBlock.data[key]
-    const newVal = typeof current === 'object' ? { ...current, [lang]: val } : { zh: String(current || ""), [lang]: val }
+    const newVal = typeof current === "object"
+      ? { ...current, [lang]: val }
+      : { zh: String(current || ""), [lang]: val }
     updateBlockData(key, newVal)
   }
 
-  function updateBlockWidth(w: number) {
-    if (!selectedId) return
-    blocks = blocks.map(b => b.id === selectedId ? { ...b, width: w } : b); debouncedSave()
-  }
-
+  // ── 拖拉 ────────────────────────────────────────────────
   function handleDragStart(id: string) { dragSrcId = id }
-  function handleDragOver(id: string) { if (dragSrcId !== id) dragOverId = id }
+  function handleDragOver(id: string)  { if (dragSrcId !== id) dragOverId = id }
   function handleDrop(targetId: string) {
     if (!dragSrcId || dragSrcId === targetId) { dragSrcId = null; dragOverId = null; return }
-    const from = blocks.findIndex(b => b.id === dragSrcId); const to = blocks.findIndex(b => b.id === targetId)
-    const arr = [...blocks]; const [moved] = arr.splice(from, 1); arr.splice(to, 0, moved)
-    blocks = arr; dragSrcId = null; dragOverId = null; debouncedSave()
+    const from = blocks.findIndex(b => b.id === dragSrcId)
+    const to   = blocks.findIndex(b => b.id === targetId)
+    const arr  = [...blocks]
+    const [moved] = arr.splice(from, 1)
+    arr.splice(to, 0, moved)
+    blocks = arr
+    dragSrcId = null; dragOverId = null
+    debouncedSave()
   }
 
-  const PICKER_OPTIONS: { type: BlockType; label: string; icon: string }[] = [
-    { type: "BIO", label: "簡介", icon: "📄" }, { type: "STATUS", label: "狀態", icon: "⌘" }, { type: "TOOLS", label: "工具", icon: "💻" },
-    { type: "LINKS", label: "聯繫", icon: "🔗" }, { type: "RESOURCES", label: "資源", icon: "📦" }, { type: "gallery", label: "作品集", icon: "🎨" },
-    { type: "commission", label: "委託", icon: "✦" }, { type: "pricing", label: "價格表", icon: "$" }, { type: "notice", label: "公告", icon: "📢" },
-    { type: "reactions", label: "心情", icon: "❤️" }, { type: "anonymous_box", label: "提問箱", icon: "🍬" }, { type: "faq", label: "問答", icon: "❓" },
-    { type: "countdown", label: "倒數", icon: "⏳" }, { type: "terms", label: "條款", icon: "📜" }, { type: "text", label: "文字", icon: "T" },
-    { type: "image", label: "圖片", icon: "🖼" }, { type: "button", label: "按鈕", icon: "↗" }, { type: "divider", label: "分隔線", icon: "—" }, { type: "spacer", label: "間距", icon: "↕" },
+  // ── Block Picker 選項 ────────────────────────────────────
+  const PICKER_OPTIONS: { type: BlockType; label: string; icon: string; group: "content" | "layout" | "special" }[] = [
+    { type: "BIO",           label: "個人簡介",  icon: "📄", group: "content" },
+    { type: "STATUS",        label: "接案狀態",  icon: "⌘",  group: "content" },
+    { type: "gallery",       label: "作品集",    icon: "🎨", group: "content" },
+    { type: "commission",    label: "委託項目",  icon: "✦",  group: "content" },
+    { type: "LINKS",         label: "聯繫方式",  icon: "🔗", group: "content" },
+    { type: "TOOLS",         label: "創作工具",  icon: "💻", group: "content" },
+    { type: "RESOURCES",     label: "相關資源",  icon: "📦", group: "content" },
+    { type: "pricing",       label: "價格方案",  icon: "$",  group: "content" },
+    { type: "notice",        label: "公告",      icon: "📢", group: "content" },
+    { type: "anonymous_box", label: "提問箱",    icon: "🍬", group: "content" },
+    { type: "reactions",     label: "心情",      icon: "❤️", group: "content" },
+    { type: "faq",           label: "問答",      icon: "❓", group: "content" },
+    { type: "countdown",     label: "倒數計時",  icon: "⏳", group: "content" },
+    { type: "terms",         label: "委託條款",  icon: "📜", group: "content" },
+    { type: "text",          label: "文字段落",  icon: "T",  group: "layout" },
+    { type: "image",         label: "圖片",      icon: "🖼", group: "layout" },
+    { type: "button",        label: "按鈕",      icon: "↗",  group: "layout" },
+    { type: "section",       label: "區段標題",  icon: "#",  group: "layout" },
+    { type: "divider",       label: "分隔線",    icon: "—",  group: "layout" },
+    { type: "spacer",        label: "間距",      icon: "↕",  group: "layout" },
   ]
 </script>
 
@@ -176,69 +208,178 @@
   <title>{t(creator?.display_name, visitorLang)}</title>
 </svelte:head>
 
-<div 
-  class="root" 
-  class:editing={isEditMode}
+<!-- ── 根容器 ── -->
+<div
+  class="page-root"
   style="
-    background-color: {theme.bgColor}; 
-    color: {theme.textColor}; 
+    background-color: {theme.bgColor};
+    color: {theme.textColor};
     --accent: {theme.accentColor};
-    --max-w: {theme.maxWidth}px;
-    font-family: {theme.fontFamily === 'serif' ? 'Georgia, serif' : theme.fontFamily === 'rounded' ? 'ui-rounded, system-ui, sans-serif' : 'system-ui, sans-serif'}
+    --page-max-w: {theme.maxWidth}px;
   "
 >
-  <!-- Language Switcher -->
-  {#if theme.supportBilingual}
-    <div class="lang-switcher">
-      <button class:active={visitorLang === 'zh'} onclick={() => visitorLang = 'zh'}>繁中</button>
-      <button class:active={visitorLang === 'en'} onclick={() => visitorLang = 'en'}>EN</button>
-    </div>
-  {/if}
 
+  <!-- ── 編輯模式頂部 Bar ── -->
   {#if isEditMode}
-    <div class="top-bar">
-      <div class="save-info">
-        <span class="mode-tag">編輯模式</span>
-        <span class="status-text">
-          {#if saveStatus === "saving"}儲存中...{:else if saveStatus === "saved"}已儲存 ✓{/if}
+    <div class="edit-bar">
+      <div class="edit-bar-left">
+        <span class="edit-tag">編輯模式</span>
+        <span class="edit-status">
+          {#if saveStatus === "saving"}
+            <span class="status-dot saving"></span>儲存中...
+          {:else if saveStatus === "saved"}
+            <span class="status-dot saved"></span>已儲存
+          {:else}
+            <span class="status-dot idle"></span>未儲存變更
+          {/if}
         </span>
       </div>
-      <button class="btn-done" onclick={() => { isEditMode = false; selectedId = null; sheetOpen = false }}>完成</button>
+      <div class="edit-bar-right">
+        <!-- 寬度調整 -->
+        <div class="width-control">
+          <span class="width-label">寬度</span>
+          <button
+            class="width-btn"
+            class:active={theme.maxWidth <= 480}
+            onclick={() => { theme.maxWidth = 480; debouncedSave() }}
+            title="手機（480px）"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg>
+          </button>
+          <button
+            class="width-btn"
+            class:active={theme.maxWidth > 480 && theme.maxWidth <= 768}
+            onclick={() => { theme.maxWidth = 640; debouncedSave() }}
+            title="平板（640px）"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="20" x="3" y="2" rx="2"/><path d="M12 18h.01"/></svg>
+          </button>
+          <button
+            class="width-btn"
+            class:active={theme.maxWidth > 768}
+            onclick={() => { theme.maxWidth = 1024; debouncedSave() }}
+            title="桌機（1024px）"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+          </button>
+        </div>
+        <button
+          class="btn-done"
+          onclick={() => { isEditMode = false; selectedId = null; sheetOpen = false }}
+        >
+          完成
+        </button>
+      </div>
     </div>
   {/if}
 
-  <div class="notion-header">
-    <div class="cover-area">
+  <!-- ── 背景圖 ── -->
+  {#if theme.bgImage}
+    <div
+      class="bg-layer"
+      style="
+        background-image: url('{theme.bgImage}');
+        filter: blur({theme.bgBlur}px);
+        background-attachment: {theme.bgFixed ? 'fixed' : 'scroll'};
+      "
+    ></div>
+  {/if}
+
+  <!-- ── 主內容 ── -->
+  <div class="page-inner" style="max-width: var(--page-max-w);">
+
+    <!-- Hero：頭像 + 名稱 + 狀態 -->
+    <header class="hero">
+      <!-- 封面輪播 -->
       {#if works.length > 0}
-        <img src={works[heroSlide % works.length].preview_url} alt="Cover" class="cover-img" />
-      {:else}
-        <div class="cover-placeholder" style="background: {theme.accentColor}22"></div>
-      {/if}
-    </div>
-    <div class="header-content" style="max-width: var(--max-w)">
-      <div class="avatar-overlap">
-        <img src={creator?.avatar_url || "/avatar.jpg"} alt={creator?.display_name} class="avatar-img" />
-      </div>
-      <div class="creator-info">
-        <h1 class="display-name">{t(creator?.display_name, visitorLang)}</h1>
-        <div class="badges">
-          <span class="badge"><span class="icon">📍</span> {visitorLang === 'zh' ? '台灣' : 'Taiwan'}</span>
-          <span class="badge"><span class="icon">✨</span> {visitorLang === 'zh' ? '專業創作者' : 'Professional Artist'}</span>
-          <span class="badge"><span class="icon">🌐</span> {visitorLang === 'zh' ? '繁體中文, English' : 'Traditional Chinese, English'}</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <main class="canvas" style="max-width: var(--max-w)">
-    <div class="bento-grid">
-      {#each blocks as block, i (block.id)}
-        <div class="bento-item col-span-{block.width || 1}">
-          {#if isEditMode}
-            <InsertionPoint onAdd={() => { insertionIndex = i; showPicker = true }} />
+        <div class="hero-cover">
+          <img
+            src={works[heroSlide % works.length].preview_url}
+            alt="cover"
+            class="cover-img"
+          />
+          <!-- 輪播點 -->
+          {#if works.length > 1}
+            <div class="cover-dots">
+              {#each works as _, i}
+                <button
+                  class="cover-dot"
+                  class:active={heroSlide % works.length === i}
+                  onclick={() => heroSlide = i}
+                  aria-label="作品 {i + 1}"
+                ></button>
+              {/each}
+            </div>
           {/if}
+        </div>
+      {:else}
+        <div class="hero-cover hero-cover-empty"></div>
+      {/if}
 
-          {#if block.visible || isEditMode}
+      <!-- 頭像 -->
+      <div class="hero-avatar-wrap">
+        <img
+          src={creator?.avatar_url || "/avatar.jpg"}
+          alt={t(creator?.display_name, visitorLang)}
+          class="hero-avatar"
+        />
+      </div>
+
+      <!-- 名稱 + 狀態 badge -->
+      <div class="hero-meta">
+        <div class="hero-name-row">
+          <h1 class="hero-name">{t(creator?.display_name, visitorLang)}</h1>
+          <span class="open-badge" class:is-open={isOpen}>
+            <span class="badge-dot"></span>
+            {isOpen
+              ? (visitorLang === "zh" ? "開放委託中" : "Open for Commission")
+              : (visitorLang === "zh" ? "暫停委託" : "Closed")}
+          </span>
+        </div>
+
+        {#if creator?.bio}
+          <p class="hero-bio">{creator.bio}</p>
+        {/if}
+
+        <!-- 風格標籤 -->
+        {#if styles.length > 0}
+          <div class="hero-tags">
+            {#each styles as s}
+              <span class="style-tag">{s}</span>
+            {/each}
+          </div>
+        {/if}
+
+        <!-- 雙語切換 -->
+        {#if theme.supportBilingual}
+          <div class="lang-toggle">
+            <button
+              class="lang-btn"
+              class:active={visitorLang === "zh"}
+              onclick={() => visitorLang = "zh"}
+            >繁中</button>
+            <button
+              class="lang-btn"
+              class:active={visitorLang === "en"}
+              onclick={() => visitorLang = "en"}
+            >EN</button>
+          </div>
+        {/if}
+      </div>
+    </header>
+
+    <!-- ── Block 列表 ── -->
+    <main class="block-list" class:editing={isEditMode}>
+
+      {#each blocks as block, i (block.id)}
+
+        <!-- 插入點 -->
+        {#if isEditMode}
+          <InsertionPoint onAdd={() => { insertionIndex = i; showPicker = true }} />
+        {/if}
+
+        {#if block.visible || isEditMode}
+          <div class="block-row" class:hidden-block={!block.visible && isEditMode}>
             <BlockWrapper
               id={block.id}
               type={block.type}
@@ -248,558 +389,836 @@
               dragOver={dragOverId === block.id}
               onSelect={() => { selectedId = block.id; activeTab = "block" }}
               onAction={(action) => {
-                if (action === 'edit') { selectedId = block.id; activeTab = "block"; sheetOpen = true }
-                if (action === 'delete') deleteBlock(block.id)
-                if (action === 'toggle-visible') toggleVisible(block.id)
+                if (action === "edit")          { selectedId = block.id; activeTab = "block"; sheetOpen = true }
+                if (action === "delete")        deleteBlock(block.id)
+                if (action === "toggle-visible") toggleVisible(block.id)
               }}
               onDragStart={() => handleDragStart(block.id)}
               onDragOver={(e) => { e.preventDefault(); handleDragOver(block.id) }}
               onDrop={() => handleDrop(block.id)}
               onDragEnd={() => { dragSrcId = null; dragOverId = null }}
             >
-              <BlockRenderer 
-                {block} {creator} {works} {isOpen} {styles} 
-                accentColor={theme.accentColor} 
-                {heroSlide} {types} 
+              <BlockRenderer
+                {block} {creator} {works} {isOpen} {styles}
+                accentColor={theme.accentColor}
+                {heroSlide} {types}
                 lang={visitorLang}
               />
             </BlockWrapper>
-          {/if}
-        </div>
-      {/each}
-    </div>
+          </div>
+        {/if}
 
-    {#if isEditMode}
-      <div class="footer-insertion">
+      {/each}
+
+      <!-- 最後一個插入點 -->
+      {#if isEditMode}
         <InsertionPoint onAdd={() => { insertionIndex = blocks.length; showPicker = true }} />
-      </div>
-      <div class="footer-actions">
-        <button class="btn-add-large" onclick={() => { insertionIndex = blocks.length; showPicker = true }}>
+        <button
+          class="btn-add-block"
+          onclick={() => { insertionIndex = blocks.length; showPicker = true }}
+        >
           + 新增區塊
         </button>
-      </div>
-    {/if}
-  </main>
-
-  <footer class="page-footer" style="max-width: var(--max-w)">
-    <div class="footer-left">
-      <div class="footer-logo">A</div>
-      <p class="copyright">© 2026 {t(creator?.display_name, visitorLang)}. Crafted for artists.</p>
-    </div>
-    <div class="footer-links">
-      {#if data.isArtist && !isEditMode}
-        <button class="footer-btn" onclick={() => isEditMode = true}>編輯名片 / Edit Card</button>
       {/if}
-      <a href="#" class="footer-link">服務條款 / Terms</a>
-    </div>
-  </footer>
 
+    </main>
+
+    <!-- ── Footer ── -->
+    <footer class="page-footer">
+      <span class="footer-copy">
+        © 2026 {t(creator?.display_name, visitorLang)}
+      </span>
+      <div class="footer-actions">
+        {#if data.isArtist && !isEditMode}
+          <button class="footer-edit-btn" onclick={() => isEditMode = true}>
+            ✎ 編輯名片
+          </button>
+        {/if}
+      </div>
+    </footer>
+
+  </div><!-- /page-inner -->
+
+  <!-- ── 編輯模式 FAB（右下角） ── -->
+  {#if data.isArtist && !isEditMode}
+    <button class="fab-edit" onclick={() => isEditMode = true} title="編輯名片">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+        <path d="m15 5 4 4"/>
+      </svg>
+    </button>
+  {/if}
+
+  <!-- ── Block Picker Modal ── -->
   {#if showPicker}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div class="picker-overlay" onclick={() => showPicker = false}>
-      <div class="picker-card" onclick={e => e.stopPropagation()}>
-        <h3>選擇要加入的區塊 / Select Block</h3>
-        <div class="picker-grid">
-          {#each PICKER_OPTIONS as opt}
-            <button class="picker-item" onclick={() => addBlockAt(opt.type, insertionIndex ?? blocks.length)}>
-              <div class="icon">{opt.icon}</div>
-              <div class="label">{opt.label}</div>
-            </button>
-          {/each}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <div class="picker-modal" onclick={(e) => e.stopPropagation()}>
+        <div class="picker-header">
+          <h3 class="picker-title">選擇區塊</h3>
+          <button class="picker-close" onclick={() => showPicker = false}>✕</button>
+        </div>
+
+        <div class="picker-section">
+          <div class="picker-section-label">內容區塊</div>
+          <div class="picker-grid">
+            {#each PICKER_OPTIONS.filter(o => o.group === "content") as opt}
+              <button
+                class="picker-item"
+                onclick={() => addBlockAt(opt.type, insertionIndex ?? blocks.length)}
+              >
+                <span class="picker-icon">{opt.icon}</span>
+                <span class="picker-label">{opt.label}</span>
+              </button>
+            {/each}
+          </div>
+        </div>
+
+        <div class="picker-section">
+          <div class="picker-section-label">版面元素</div>
+          <div class="picker-grid">
+            {#each PICKER_OPTIONS.filter(o => o.group === "layout") as opt}
+              <button
+                class="picker-item"
+                onclick={() => addBlockAt(opt.type, insertionIndex ?? blocks.length)}
+              >
+                <span class="picker-icon">{opt.icon}</span>
+                <span class="picker-label">{opt.label}</span>
+              </button>
+            {/each}
+          </div>
         </div>
       </div>
     </div>
   {/if}
 
-  <BottomSheet 
-    bind:open={sheetOpen} 
+  <!-- ── Bottom Sheet（設定面板） ── -->
+  <BottomSheet
+    bind:open={sheetOpen}
     onClose={() => {}}
     tabs={[
-      { id: "block", label: "區塊設定" },
-      { id: "global", label: "全域外觀" }
+      { id: "block",  label: "區塊設定" },
+      { id: "global", label: "全域外觀" },
     ]}
     bind:activeTab
   >
+
+    <!-- 區塊設定 Tab -->
     {#if activeTab === "block"}
       {#if selectedBlock}
         <div class="settings">
-          <div class="field">
-            <label>顯示寬度 (Bento Grid)</label>
-            <div class="choice-group">
-              <button class:active={selectedBlock.width === 1} onclick={() => updateBlockWidth(1)}>1 欄</button>
-              <button class:active={selectedBlock.width === 2} onclick={() => updateBlockWidth(2)}>2 欄</button>
-              <button class:active={selectedBlock.width === 3} onclick={() => updateBlockWidth(3)}>全寬</button>
-            </div>
-          </div>
 
-          {#if selectedBlock.type === "BIO" || selectedBlock.type === "STATUS" || selectedBlock.type === "gallery" || selectedBlock.type === "commission" || selectedBlock.type === "pricing" || selectedBlock.type === "LINKS" || selectedBlock.type === "RESOURCES" || selectedBlock.type === "section"}
+          <!-- 各 block 類型的設定 -->
+          {#if ["BIO","STATUS","gallery","commission","pricing","LINKS","RESOURCES","section"].includes(selectedBlock.type)}
             <div class="field">
-              <label>標題 (繁中)</label>
-              <input type="text" value={t(selectedBlock.data.title, 'zh')} oninput={e => updateT("title", 'zh', (e.target as HTMLInputElement).value)} />
+              <label class="field-label">標題（繁中）</label>
+              <input
+                type="text"
+                value={t(selectedBlock.data.title, "zh")}
+                oninput={e => updateT("title", "zh", (e.target as HTMLInputElement).value)}
+              />
               {#if theme.supportBilingual}
-                <label style="margin-top: 8px">標題 (English)</label>
-                <input type="text" value={t(selectedBlock.data.title, 'en')} oninput={e => updateT("title", 'en', (e.target as HTMLInputElement).value)} />
+                <label class="field-label" style="margin-top:8px">Title (English)</label>
+                <input
+                  type="text"
+                  value={t(selectedBlock.data.title, "en")}
+                  oninput={e => updateT("title", "en", (e.target as HTMLInputElement).value)}
+                />
               {/if}
             </div>
           {/if}
 
           {#if selectedBlock.type === "STATUS"}
             <div class="field">
-              <label>目前排單量</label>
-              <input type="number" value={selectedBlock.data.queueCount} oninput={e => updateBlockData("queueCount", Number((e.target as HTMLInputElement).value))} />
+              <label class="field-label">排單量</label>
+              <input
+                type="number"
+                value={selectedBlock.data.queueCount}
+                oninput={e => updateBlockData("queueCount", Number((e.target as HTMLInputElement).value))}
+              />
             </div>
-
-          {:else if selectedBlock.type === "TOOLS"}
-            <div class="field">
-              <label>工具清單 (JSON 格式暫代)</label>
-              <textarea rows="5" oninput={e => {
-                try { updateBlockData("tools", JSON.parse((e.target as HTMLTextAreaElement).value)) } catch {}
-              }}>{JSON.stringify(selectedBlock.data.tools, null, 2)}</textarea>
-            </div>
-
-          {:else if selectedBlock.type === "LINKS"}
-            {#each selectedBlock.data.links as link, i}
-              <div class="input-row">
-                <input type="text" value={link.label} oninput={e => {
-                  const newLinks = [...selectedBlock.data.links]; newLinks[i].label = (e.target as HTMLInputElement).value; updateBlockData("links", newLinks)
-                }} placeholder="標籤" />
-                <input type="text" value={link.url} oninput={e => {
-                  const newLinks = [...selectedBlock.data.links]; newLinks[i].url = (e.target as HTMLInputElement).value; updateBlockData("links", newLinks)
-                }} placeholder="網址" />
-              </div>
-            {/each}
 
           {:else if selectedBlock.type === "text"}
             <div class="field">
-              <label>文字內容 (繁中)</label>
-              <textarea rows="6" oninput={e => updateT("content", 'zh', (e.target as HTMLTextAreaElement).value)}>{t(selectedBlock.data.content, 'zh')}</textarea>
+              <label class="field-label">文字內容（繁中）</label>
+              <textarea
+                rows="5"
+                oninput={e => updateT("content", "zh", (e.target as HTMLTextAreaElement).value)}
+              >{t(selectedBlock.data.content, "zh")}</textarea>
               {#if theme.supportBilingual}
-                <label style="margin-top: 8px">文字內容 (English)</label>
-                <textarea rows="6" oninput={e => updateT("content", 'en', (e.target as HTMLTextAreaElement).value)}>{t(selectedBlock.data.content, 'en')}</textarea>
-              {/if}
-            </div>
-
-          {:else if selectedBlock.type === "button"}
-             <div class="field">
-              <label>標籤 (繁中)</label>
-              <input type="text" value={t(selectedBlock.data.label, 'zh')} oninput={e => updateT("label", 'zh', (e.target as HTMLInputElement).value)} />
-              {#if theme.supportBilingual}
-                <label style="margin-top: 8px">標籤 (English)</label>
-                <input type="text" value={t(selectedBlock.data.label, 'en')} oninput={e => updateT("label", 'en', (e.target as HTMLInputElement).value)} />
+                <label class="field-label" style="margin-top:8px">Content (English)</label>
+                <textarea
+                  rows="5"
+                  oninput={e => updateT("content", "en", (e.target as HTMLTextAreaElement).value)}
+                >{t(selectedBlock.data.content, "en")}</textarea>
               {/if}
             </div>
             <div class="field">
-              <label>網址 (URL)</label>
-              <input type="text" value={selectedBlock.data.url} oninput={e => updateBlockData("url", (e.target as HTMLInputElement).value)} />
+              <label class="field-label">對齊</label>
+              <div class="choice-group">
+                {#each ["left","center","right"] as a}
+                  <button
+                    class:active={selectedBlock.data.align === a}
+                    onclick={() => updateBlockData("align", a)}
+                  >{a === "left" ? "靠左" : a === "center" ? "置中" : "靠右"}</button>
+                {/each}
+              </div>
+            </div>
+
+          {:else if selectedBlock.type === "button"}
+            <div class="field">
+              <label class="field-label">標籤（繁中）</label>
+              <input type="text" value={t(selectedBlock.data.label, "zh")} oninput={e => updateT("label","zh",(e.target as HTMLInputElement).value)} />
+              {#if theme.supportBilingual}
+                <label class="field-label" style="margin-top:8px">Label (English)</label>
+                <input type="text" value={t(selectedBlock.data.label, "en")} oninput={e => updateT("label","en",(e.target as HTMLInputElement).value)} />
+              {/if}
+            </div>
+            <div class="field">
+              <label class="field-label">連結 URL</label>
+              <input type="url" value={selectedBlock.data.url} oninput={e => updateBlockData("url",(e.target as HTMLInputElement).value)} />
+            </div>
+            <div class="field">
+              <label class="field-label">樣式</label>
+              <div class="choice-group">
+                <button class:active={selectedBlock.data.style==="solid"}   onclick={() => updateBlockData("style","solid")}>實心</button>
+                <button class:active={selectedBlock.data.style==="outline"} onclick={() => updateBlockData("style","outline")}>外框</button>
+              </div>
             </div>
 
           {:else if selectedBlock.type === "notice"}
             <div class="field">
-              <label>公告文字 (繁中)</label>
-              <textarea rows="3" oninput={e => updateT("text", 'zh', (e.target as HTMLTextAreaElement).value)}>{t(selectedBlock.data.text, 'zh')}</textarea>
+              <label class="field-label">公告文字（繁中）</label>
+              <textarea rows="3" oninput={e => updateT("text","zh",(e.target as HTMLTextAreaElement).value)}>{t(selectedBlock.data.text,"zh")}</textarea>
               {#if theme.supportBilingual}
-                <label style="margin-top: 8px">公告文字 (English)</label>
-                <textarea rows="3" oninput={e => updateT("text", 'en', (e.target as HTMLTextAreaElement).value)}>{t(selectedBlock.data.text, 'en')}</textarea>
+                <label class="field-label" style="margin-top:8px">Notice (English)</label>
+                <textarea rows="3" oninput={e => updateT("text","en",(e.target as HTMLTextAreaElement).value)}>{t(selectedBlock.data.text,"en")}</textarea>
               {/if}
             </div>
 
           {:else if selectedBlock.type === "faq"}
             {#each selectedBlock.data.items as item, i}
-              <div class="plan-edit-card">
-                <input type="text" value={t(item.question, 'zh')} oninput={e => {
-                  const newItems = [...selectedBlock.data.items]; item.question = typeof item.question === 'object' ? { ...item.question, zh: (e.target as HTMLInputElement).value } : { zh: (e.target as HTMLInputElement).value, en: "" }; updateBlockData("items", newItems)
-                }} placeholder="問題 (繁中)" />
-                <textarea rows="2" oninput={e => {
-                  const newItems = [...selectedBlock.data.items]; item.answer = typeof item.answer === 'object' ? { ...item.answer, zh: (e.target as HTMLTextAreaElement).value } : { zh: (e.target as HTMLTextAreaElement).value, en: "" }; updateBlockData("items", newItems)
-                }}>{t(item.answer, 'zh')}</textarea>
-                {#if theme.supportBilingual}
-                   <input type="text" value={t(item.question, 'en')} oninput={e => {
-                    const newItems = [...selectedBlock.data.items]; item.question = typeof item.question === 'object' ? { ...item.question, en: (e.target as HTMLInputElement).value } : { zh: "", en: (e.target as HTMLInputElement).value }; updateBlockData("items", newItems)
-                  }} placeholder="Question (English)" />
-                  <textarea rows="2" oninput={e => {
-                    const newItems = [...selectedBlock.data.items]; item.answer = typeof item.answer === 'object' ? { ...item.answer, en: (e.target as HTMLTextAreaElement).value } : { zh: "", en: (e.target as HTMLTextAreaElement).value }; updateBlockData("items", newItems)
-                  }}>{t(item.answer, 'en')}</textarea>
-                {/if}
+              <div class="plan-card">
+                <input type="text" placeholder="問題（繁中）" value={t(item.question,"zh")}
+                  oninput={e => { const arr=[...selectedBlock.data.items]; arr[i].question={...arr[i].question, zh:(e.target as HTMLInputElement).value}; updateBlockData("items",arr) }} />
+                <textarea rows="2" placeholder="回答（繁中）"
+                  oninput={e => { const arr=[...selectedBlock.data.items]; arr[i].answer={...arr[i].answer, zh:(e.target as HTMLTextAreaElement).value}; updateBlockData("items",arr) }}
+                >{t(item.answer,"zh")}</textarea>
               </div>
             {/each}
 
+          {:else if selectedBlock.type === "countdown"}
+            <div class="field">
+              <label class="field-label">目標日期</label>
+              <input type="datetime-local" value={selectedBlock.data.targetDate?.slice(0,16)}
+                onchange={e => updateBlockData("targetDate", new Date((e.target as HTMLInputElement).value).toISOString())} />
+            </div>
+
           {:else if selectedBlock.type === "terms"}
             <div class="field">
-              <label>條款內容 (繁中)</label>
-              <textarea rows="6" oninput={e => updateT("content", 'zh', (e.target as HTMLTextAreaElement).value)}>{t(selectedBlock.data.content, 'zh')}</textarea>
+              <label class="field-label">條款內容（繁中）</label>
+              <textarea rows="6" oninput={e => updateT("content","zh",(e.target as HTMLTextAreaElement).value)}>{t(selectedBlock.data.content,"zh")}</textarea>
               {#if theme.supportBilingual}
-                <label style="margin-top: 8px">條款內容 (English)</label>
-                <textarea rows="6" oninput={e => updateT("content", 'en', (e.target as HTMLTextAreaElement).value)}>{t(selectedBlock.data.content, 'en')}</textarea>
+                <label class="field-label" style="margin-top:8px">Terms (English)</label>
+                <textarea rows="6" oninput={e => updateT("content","en",(e.target as HTMLTextAreaElement).value)}>{t(selectedBlock.data.content,"en")}</textarea>
               {/if}
             </div>
           {/if}
+
         </div>
       {:else}
-        <p class="empty-hint">選取區塊以進行編輯</p>
+        <p class="empty-hint">選取一個區塊以編輯設定</p>
       {/if}
 
+    <!-- 全域外觀 Tab -->
     {:else if activeTab === "global"}
       <div class="settings">
-        <label class="checkbox-label">
-          <input type="checkbox" bind:checked={theme.supportBilingual} onchange={debouncedSave} />
-          啟用雙語支援 (繁中/EN)
-        </label>
-        
+
         <div class="field">
-          <label>預設語系</label>
-          <select bind:value={theme.defaultLang} onchange={debouncedSave}>
-            <option value="zh">繁體中文</option>
-            <option value="en">English</option>
-          </select>
+          <label class="field-label">頁面寬度</label>
+          <div class="choice-group">
+            <button class:active={theme.maxWidth <= 480}  onclick={() => { theme.maxWidth = 480;  debouncedSave() }}>手機</button>
+            <button class:active={theme.maxWidth === 640}  onclick={() => { theme.maxWidth = 640;  debouncedSave() }}>窄版</button>
+            <button class:active={theme.maxWidth === 768}  onclick={() => { theme.maxWidth = 768;  debouncedSave() }}>中版</button>
+            <button class:active={theme.maxWidth >= 1024} onclick={() => { theme.maxWidth = 1024; debouncedSave() }}>全寬</button>
+          </div>
         </div>
 
         <div class="field">
-          <label>快速配色方案</label>
-          <div class="palette-grid">
-            {#each PALETTES as p}
-              <button class="palette-btn" style="background: {p.bg}; border-color: {p.accent}" onclick={() => applyPalette(p)}>
-                <div class="palette-dot" style="background: {p.accent}"></div>
-                <span style="color: {p.text}">{p.label}</span>
-              </button>
-            {/each}
-          </div>
-        </div>
-        <div class="field">
-          <label>背景顏色</label>
+          <label class="field-label">背景顏色</label>
           <input type="color" bind:value={theme.bgColor} oninput={debouncedSave} />
         </div>
+
         <div class="field">
-          <label>字型樣式</label>
+          <label class="field-label">強調色</label>
+          <input type="color" bind:value={theme.accentColor} oninput={debouncedSave} />
+        </div>
+
+        <div class="field">
+          <label class="field-label">字型</label>
           <select bind:value={theme.fontFamily} onchange={debouncedSave}>
             <option value="system">系統字型</option>
             <option value="serif">襯線體</option>
             <option value="rounded">圓體</option>
           </select>
         </div>
-        <div class="field">
-          <label>頁面最大寬度 ({theme.maxWidth}px)</label>
-          <input type="range" min="600" max="1280" step="40" bind:value={theme.maxWidth} oninput={debouncedSave} />
-        </div>
+
+        <label class="checkbox-label">
+          <input type="checkbox" bind:checked={theme.supportBilingual} onchange={debouncedSave} />
+          啟用繁中 / English 雙語
+        </label>
+
+        {#if theme.supportBilingual}
+          <div class="field">
+            <label class="field-label">預設語系</label>
+            <select bind:value={theme.defaultLang} onchange={debouncedSave}>
+              <option value="zh">繁體中文</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        {/if}
+
       </div>
     {/if}
+
   </BottomSheet>
-</div>
+
+</div><!-- /page-root -->
 
 <style>
-/* ── Root ── */
-.root {
+/* ────────────────────────────────────────────────────
+   根容器
+──────────────────────────────────────────────────── */
+.page-root {
   min-height: 100vh;
   position: relative;
-  transition: background 0.3s;
-  padding-bottom: 80px;
   font-family: var(--font-body);
 }
 
-/* ── Language switcher ── */
-.lang-switcher {
+/* ────────────────────────────────────────────────────
+   背景圖
+──────────────────────────────────────────────────── */
+.bg-layer {
   position: fixed;
-  top: 12px;
-  right: 12px;
-  z-index: 1000;
-  display: flex;
-  border: var(--border);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-.lang-switcher button {
-  padding: 5px 14px;
-  border: none;
-  background: var(--white);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  color: var(--ink);
-  transition: background 0.15s;
-}
-.lang-switcher button.active {
-  background: var(--blue);
-  color: var(--white);
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  pointer-events: none;
 }
 
-/* ── Edit mode toolbar ── */
-.top-bar {
+/* ────────────────────────────────────────────────────
+   編輯模式頂部 Bar
+──────────────────────────────────────────────────── */
+.edit-bar {
   position: sticky;
   top: 0;
-  z-index: 500;
-  height: 52px;
-  padding: 0 20px;
+  z-index: 200;
+  height: 48px;
   background: var(--ink);
   color: var(--white);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 3px solid var(--blue);
+  padding: 0 16px;
+  border-bottom: 2px solid var(--blue);
+  font-family: var(--font-body);
 }
-.mode-tag {
+
+.edit-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.edit-tag {
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;
-  padding: 3px 10px;
+  padding: 2px 8px;
   background: var(--red);
   color: var(--white);
-  border: 1px solid var(--white);
-  margin-right: 12px;
 }
-.status-text {
+
+.edit-status {
   font-family: var(--font-mono);
   font-size: 11px;
   opacity: 0.6;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.status-dot.saving { background: var(--gold); }
+.status-dot.saved  { background: #4ade80; }
+.status-dot.idle   { background: rgba(255,255,255,.3); }
+
+.edit-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 寬度控制 */
+.width-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.width-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  opacity: 0.5;
+  margin-right: 4px;
+}
+.width-btn {
+  width: 30px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.2);
+  color: rgba(255,255,255,.6);
+  cursor: pointer;
+  transition: all .15s;
+}
+.width-btn:hover { background: rgba(255,255,255,.2); color: white; }
+.width-btn.active { background: var(--blue); border-color: var(--blue); color: white; }
+
 .btn-done {
-  padding: 6px 20px;
+  padding: 5px 16px;
   background: var(--white);
   color: var(--ink);
-  border: 2px solid var(--white);
+  border: none;
   font-family: var(--font-body);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.08s;
+  transition: transform .08s;
 }
-.btn-done:hover { transform: translate(-1px, -1px); }
+.btn-done:hover { transform: translate(-1px,-1px); }
 
-/* ── Cover / Header ── */
-.notion-header { margin-bottom: 2rem; }
-.cover-area {
-  height: 240px;
-  width: 100%;
-  overflow: hidden;
-  background: var(--blue);
-  border-bottom: 3px solid var(--ink);
+/* ────────────────────────────────────────────────────
+   頁面主容器
+──────────────────────────────────────────────────── */
+.page-inner {
   position: relative;
+  z-index: 1;
+  margin: 0 auto;
+  padding: 0 16px 80px;
+  transition: max-width .3s ease;
 }
-.cover-area::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 120px;
-  height: 100%;
-  background-image:
-    repeating-linear-gradient(
-      0deg,
-      var(--white) 0px, var(--white) 12px,
-      var(--blue) 12px, var(--blue) 24px
-    );
-  opacity: 0.15;
-  pointer-events: none;
+
+/* ────────────────────────────────────────────────────
+   Hero
+──────────────────────────────────────────────────── */
+.hero {
+  margin-bottom: 24px;
 }
+
+.hero-cover {
+  height: 200px;
+  overflow: hidden;
+  position: relative;
+  background: var(--blue);
+  border: var(--border);
+  border-top: none;
+  margin: 0 -16px;
+}
+
+.hero-cover-empty {
+  background: color-mix(in srgb, var(--blue) 20%, var(--cream));
+}
+
 .cover-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: brightness(0.8);
+  filter: brightness(.85);
 }
-.cover-placeholder {
-  width: 100%;
-  height: 100%;
-  background: var(--blue);
-}
-.header-content {
-  margin: 0 auto;
-  padding: 0 48px;
-  position: relative;
-}
-.avatar-overlap {
+
+.cover-dots {
   position: absolute;
-  top: -56px;
-  left: 48px;
-  width: 112px;
-  height: 112px;
-  border: 3px solid var(--ink);
-  box-shadow: var(--shadow-md);
-  background: var(--white);
-  padding: 3px;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
 }
-.avatar-img {
-  width: 100%;
-  height: 100%;
+
+.cover-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.4);
+  cursor: pointer;
+  padding: 0;
+  transition: background .2s;
+}
+.cover-dot.active { background: var(--white); }
+
+.hero-avatar-wrap {
+  margin-top: -40px;
+  padding-left: 16px;
+}
+
+.hero-avatar {
+  width: 80px;
+  height: 80px;
   object-fit: cover;
+  border: 3px solid var(--white);
+  box-shadow: var(--shadow-md);
+  background: var(--cream);
 }
-.creator-info { padding-top: 72px; }
-.display-name {
-  font-family: var(--font-display);
-  font-size: 44px;
-  color: var(--ink);
-  margin: 0 0 14px;
-  line-height: 1.1;
-  letter-spacing: 0.01em;
+
+.hero-meta {
+  padding: 12px 0 0;
 }
-.badges { display: flex; flex-wrap: wrap; gap: 10px; }
-.badge {
+
+.hero-name-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.hero-name {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.1;
+}
+
+/* 開放狀態 badge */
+.open-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 3px 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border: 1px solid currentColor;
+  color: var(--ink);
+  opacity: .5;
+}
+.open-badge.is-open {
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 8%, transparent);
+  opacity: 1;
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.hero-bio {
+  font-size: .9rem;
+  color: var(--ink);
+  opacity: .7;
+  line-height: 1.65;
+  margin: 0 0 12px;
+  max-width: 56ch;
+}
+
+.hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.style-tag {
+  padding: 2px 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
   background: var(--white);
   border: 1px solid var(--ink);
-  box-shadow: var(--shadow-sm);
-  font-size: 12px;
-  font-weight: 600;
   color: var(--ink);
+  box-shadow: var(--shadow-sm);
 }
 
-/* ── Bento Grid ── */
-.canvas { margin: 0 auto; padding: 32px 48px 120px; }
-.bento-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+/* 雙語切換 */
+.lang-toggle {
+  display: inline-flex;
+  border: 1px solid var(--ink);
+  overflow: hidden;
 }
-.bento-item { min-width: 0; }
-.col-span-1 { grid-column: span 1; }
-.col-span-2 { grid-column: span 2; }
-.col-span-3 { grid-column: span 3; }
+.lang-btn {
+  padding: 3px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--white);
+  color: var(--ink);
+  border: none;
+  cursor: pointer;
+  opacity: .45;
+  transition: all .15s;
+}
+.lang-btn.active {
+  background: var(--blue);
+  color: var(--white);
+  opacity: 1;
+}
 
-/* ── Add block button ── */
-.footer-actions {
-  margin-top: 40px;
+/* ────────────────────────────────────────────────────
+   Block 列表
+──────────────────────────────────────────────────── */
+.block-list {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 0;
 }
-.btn-add-large {
-  padding: 14px 48px;
-  border: 2px dashed var(--color-border-secondary);
+
+.block-row {
+  /* BlockWrapper 在編輯模式下自己有 margin */
+}
+
+.block-row.hidden-block {
+  opacity: .4;
+}
+
+/* 新增按鈕 */
+.btn-add-block {
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px;
+  border: 2px dashed color-mix(in srgb, var(--ink) 20%, transparent);
   background: transparent;
-  color: var(--color-text-tertiary);
+  color: color-mix(in srgb, var(--ink) 35%, transparent);
   font-family: var(--font-body);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all .2s;
 }
-.btn-add-large:hover {
+.btn-add-block:hover {
   border-color: var(--blue);
   color: var(--blue);
   border-style: solid;
-  box-shadow: var(--shadow-sm);
 }
 
-/* ── Footer ── */
-.page-footer {
-  margin: 0 auto;
-  padding: 32px 48px;
-  border-top: var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.footer-left { display: flex; align-items: center; gap: 14px; }
-.footer-logo {
-  width: 32px;
-  height: 32px;
-  background: var(--blue);
+/* ────────────────────────────────────────────────────
+   FAB 編輯按鈕
+──────────────────────────────────────────────────── */
+.fab-edit {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  z-index: 100;
+  width: 48px;
+  height: 48px;
+  border-radius: 0;
+  background: var(--ink);
   color: var(--white);
+  border: 2px solid var(--blue);
+  box-shadow: var(--shadow-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-display);
-  font-size: 18px;
-  border: 2px solid var(--ink);
-}
-.copyright {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--color-text-tertiary);
-}
-.footer-links { display: flex; gap: 24px; align-items: center; }
-.footer-link {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--color-text-tertiary);
-  text-decoration: none;
-}
-.footer-btn {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--blue);
-  background: none;
-  border: 1px solid var(--blue);
-  padding: 4px 12px;
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
+  transition: transform .1s, box-shadow .1s;
+}
+.fab-edit:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 var(--blue);
 }
 
-/* ── Block Picker Overlay ── */
+/* ────────────────────────────────────────────────────
+   Block Picker Modal
+──────────────────────────────────────────────────── */
 .picker-overlay {
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: color-mix(in srgb, var(--ink) 70%, transparent);
+  background: color-mix(in srgb, var(--ink) 65%, transparent);
+  backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
 }
-.picker-card {
+
+.picker-modal {
   background: var(--white);
   border: var(--border);
   box-shadow: var(--shadow-lg);
-  padding: 32px;
   width: 100%;
-  max-width: 560px;
+  max-width: 520px;
+  max-height: 75vh;
+  overflow-y: auto;
 }
-.picker-card h3 {
+
+.picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--white);
+  z-index: 1;
+}
+
+.picker-title {
   font-family: var(--font-display);
-  font-size: 1.5rem;
-  margin: 0 0 24px;
-  text-align: center;
-  color: var(--blue);
+  font-size: 1.1rem;
+  color: var(--ink);
+  margin: 0;
 }
+
+.picker-close {
+  background: none;
+  border: 1px solid var(--ink);
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  transition: all .1s;
+}
+.picker-close:hover { background: var(--ink); color: var(--white); }
+
+.picker-section {
+  padding: 16px 20px;
+}
+.picker-section + .picker-section {
+  border-top: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.picker-section-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  opacity: .4;
+  margin-bottom: 10px;
+}
+
 .picker-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  max-height: 60vh;
-  overflow-y: auto;
-  padding: 4px;
+  gap: 8px;
 }
+
 .picker-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 18px 8px;
+  gap: 8px;
+  padding: 14px 8px;
   background: var(--white);
   border: var(--border);
   box-shadow: var(--shadow-sm);
   cursor: pointer;
-  transition: transform 0.08s, box-shadow 0.08s, background 0.08s, color 0.08s;
+  transition: transform .08s, box-shadow .08s, background .08s;
+  font-family: var(--font-body);
 }
 .picker-item:hover {
-  transform: translate(-2px, -2px);
+  transform: translate(-2px,-2px);
   box-shadow: var(--shadow-md);
   background: var(--blue);
   color: var(--white);
 }
-.picker-item .icon { font-size: 26px; }
-.picker-item .label { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; font-family: var(--font-mono); }
 
-/* ── Settings panel (BottomSheet content) ── */
-.settings { display: flex; flex-direction: column; gap: 20px; }
-.field { display: flex; flex-direction: column; gap: 8px; }
-.field label {
+.picker-icon { font-size: 22px; }
+.picker-label {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
-  color: var(--ink);
-  letter-spacing: 0.08em;
-  opacity: 0.5;
+  letter-spacing: .06em;
+  text-align: center;
 }
-.field input, .field select, .field textarea {
-  padding: 10px 14px;
+
+/* ────────────────────────────────────────────────────
+   Footer
+──────────────────────────────────────────────────── */
+.page-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 0 0;
+  border-top: var(--border);
+  margin-top: 24px;
+}
+
+.footer-copy {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  color: var(--ink);
+  opacity: .4;
+}
+
+.footer-edit-btn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: var(--blue);
+  background: none;
+  border: 1px solid var(--blue);
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: all .1s;
+}
+.footer-edit-btn:hover { background: var(--blue); color: var(--white); }
+
+/* ────────────────────────────────────────────────────
+   BottomSheet 內 Settings
+──────────────────────────────────────────────────── */
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: var(--ink);
+  opacity: .5;
+}
+
+.field input,
+.field select,
+.field textarea {
+  padding: 9px 12px;
   border: var(--border);
   font-family: var(--font-body);
   font-size: 14px;
@@ -808,83 +1227,88 @@
   width: 100%;
   outline: none;
 }
-.field input:focus, .field select:focus, .field textarea:focus {
-  box-shadow: var(--shadow-sm);
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  box-shadow: 0 0 0 2px var(--blue);
 }
+
 .field input[type="color"] {
-  width: 100%;
   height: 44px;
-  border: var(--border);
   cursor: pointer;
   padding: 4px;
 }
-.choice-group { display: flex; gap: 8px; }
+
+.choice-group {
+  display: flex;
+  gap: 6px;
+}
 .choice-group button {
   flex: 1;
   padding: 8px;
   border: var(--border);
   background: var(--white);
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.08s;
-  box-shadow: var(--shadow-sm);
+  transition: all .08s;
 }
 .choice-group button.active {
   background: var(--blue);
   color: var(--white);
-  box-shadow: none;
-  transform: translate(2px, 2px);
+  border-color: var(--blue);
 }
-.input-row { display: flex; gap: 8px; align-items: center; }
-.palette-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.palette-btn {
-  padding: 10px;
-  border: var(--border);
-  box-shadow: var(--shadow-sm);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 700;
-  transition: transform 0.08s;
-}
-.palette-btn:hover { transform: translate(-1px, -1px); box-shadow: var(--shadow-md); }
-.palette-dot { width: 14px; height: 14px; border: 1px solid var(--ink); }
-.empty-hint {
-  text-align: center;
-  padding: 60px;
-  color: var(--color-text-tertiary);
-  font-style: italic;
-  font-size: 14px;
-}
-.plan-edit-card {
+
+.plan-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid var(--color-border-tertiary);
-  background: var(--color-background-secondary);
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  background: color-mix(in srgb, var(--ink) 2%, var(--white));
+  margin-bottom: 8px;
 }
+.plan-card input,
+.plan-card textarea {
+  padding: 6px 10px;
+  border: var(--border);
+  font-family: var(--font-body);
+  font-size: 13px;
+  background: var(--white);
+  color: var(--ink);
+  outline: none;
+  width: 100%;
+}
+
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
+  gap: 8px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  color: var(--ink);
 }
-.footer-insertion { margin-top: 16px; }
 
-@media (max-width: 768px) {
-  .bento-grid { grid-template-columns: 1fr; }
-  .col-span-1, .col-span-2, .col-span-3 { grid-column: span 1; }
-  .header-content { padding: 0 20px; }
-  .avatar-overlap { left: 20px; width: 88px; height: 88px; top: -44px; }
-  .display-name { font-size: 30px; }
-  .canvas { padding: 32px 20px; }
+.empty-hint {
+  text-align: center;
+  padding: 48px 20px;
+  font-style: italic;
+  color: var(--ink);
+  opacity: .4;
+  font-size: 13px;
+}
+
+/* ────────────────────────────────────────────────────
+   RWD
+──────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .edit-bar { padding: 0 10px; }
+  .width-control { display: none; }
   .picker-grid { grid-template-columns: repeat(3, 1fr); }
+  .hero-cover { height: 160px; }
+  .hero-avatar { width: 68px; height: 68px; }
+  .hero-name { font-size: 1.5rem; }
 }
 </style>

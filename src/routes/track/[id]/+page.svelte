@@ -5,6 +5,12 @@
 
   const commission = $derived(data.commission)
   const revisions = $derived(data.revisions as any[])
+  const discussion = $derived(data.discussion as any)
+  const messages = $derived(data.messages as any[])
+
+  const statusOrder = ['pending', 'accepted', 'in_progress', 'revision', 'completed']
+  const statusNames: Record<string,string> = { pending: '待確認', accepted: '已接受', in_progress: '製作中', revision: '修改中', completed: '已完成' }
+  const currentIdx = $derived(statusOrder.indexOf(commission?.status ?? ''))
 
   const statusLabel: Record<string, string> = {
     pending: "等待繪師確認中",
@@ -18,6 +24,10 @@
 
   function formatDate(ts: number) {
     return new Date(ts * 1000).toLocaleString("zh-TW")
+  }
+
+  function formatShortDate(ts: number) {
+    return new Date(ts * 1000).toLocaleString("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })
   }
 
   // 紅線留言邏輯
@@ -48,9 +58,6 @@
   </div>
 
   <!-- Status strip: 5 steps, done=blue, current=red, future=white -->
-  {@const statusOrder = ['pending', 'accepted', 'in_progress', 'revision', 'completed']}
-  {@const statusNames: Record<string,string> = { pending: '待確認', accepted: '已接受', in_progress: '製作中', revision: '修改中', completed: '已完成' }}
-  {@const currentIdx = statusOrder.indexOf(commission.status)}
   <div class="status-strip">
     {#each statusOrder as step, i}
       <div class="status-step"
@@ -81,6 +88,63 @@
       <span class="note-label">繪師留言</span>
       <p class="note-content">{commission.creator_note}</p>
     </div>
+  {/if}
+
+  {#if commission.status === 'accepted' || commission.status === 'in_progress' || commission.status === 'revision'}
+    <section class="discussion-room">
+      <div class="room-head">排隊中討論室</div>
+      <p class="room-desc">可先確認需求模板、對齊共識，再進入正式製作。</p>
+
+      <form method="POST" action="?/updateDiscussion" class="discussion-form">
+        <label class="field-label" for="client_template">委託詳情模板（請盡量填完整）</label>
+        <textarea
+          id="client_template"
+          name="client_template"
+          rows="8"
+          placeholder={"請填寫：\n1. 委託用途\n2. 角色與設定\n3. 畫面尺寸/比例\n4. 希望交付格式\n5. 截止日\n6. 可接受修改次數\n7. 其他注意事項"}
+        >{discussion?.client_template ?? ''}</textarea>
+        <label class="confirm-row">
+          <input type="checkbox" name="client_confirmed" value="1" checked={discussion?.client_confirmed === 1} />
+          我已確認上述需求描述可作為正式製作依據
+        </label>
+        <button type="submit" class="send-btn">儲存模板</button>
+      </form>
+
+      <div class="compare-grid">
+        <div>
+          <div class="field-label">繪師整理重點</div>
+          <div class="compare-box">{discussion?.artist_summary || '繪師尚未回覆重點整理。'}</div>
+        </div>
+        <div>
+          <div class="field-label">共識比對</div>
+          <div class="compare-box">{discussion?.alignment_notes || '尚未建立共識比對項目。'}</div>
+        </div>
+      </div>
+
+      <div class="confirm-pills">
+        <span class="pill" class:ok={discussion?.client_confirmed === 1}>委託人確認：{discussion?.client_confirmed === 1 ? '已確認' : '未確認'}</span>
+        <span class="pill" class:ok={discussion?.artist_confirmed === 1}>繪師確認：{discussion?.artist_confirmed === 1 ? '已確認' : '未確認'}</span>
+      </div>
+
+      <div class="field-label" style="margin-top:0.75rem">討論訊息</div>
+      <div class="chat-box">
+        {#if messages.length === 0}
+          <p class="empty-chat">尚無訊息，先從需求確認開始吧。</p>
+        {:else}
+          {#each messages as msg}
+            <div class="chat-msg" class:artist={msg.author_role === 'artist'}>
+              <div class="chat-meta">{msg.author_role === 'artist' ? '繪師' : '我'} · {formatShortDate(msg.created_at)}</div>
+              <div class="chat-content">{msg.content}</div>
+            </div>
+          {/each}
+        {/if}
+      </div>
+
+      <form method="POST" action="?/sendMessage" class="chat-form">
+        <input type="text" name="content" placeholder="輸入訊息給繪師..." required />
+        <button type="submit" class="send-btn">送出</button>
+      </form>
+    </section>
   {/if}
 
   {#if commission.status === 'delivered'}
@@ -287,6 +351,128 @@
   font-size: 0.9rem;
   line-height: 1.6;
   color: var(--ink);
+}
+
+.discussion-room {
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--white);
+}
+.room-head {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--blue);
+  margin-bottom: 0.25rem;
+}
+.room-desc {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.8rem;
+}
+.discussion-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.discussion-form textarea {
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
+  padding: 0.65rem;
+  font-size: 0.9rem;
+  resize: vertical;
+}
+.field-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-text-tertiary);
+}
+.confirm-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+}
+.compare-grid {
+  margin-top: 0.8rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+}
+.compare-box {
+  white-space: pre-wrap;
+  border: 1px solid var(--color-border-tertiary);
+  background: var(--color-background-secondary);
+  padding: 0.6rem;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+.confirm-pills {
+  margin-top: 0.7rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  border: 1px solid var(--color-border-secondary);
+  padding: 3px 8px;
+}
+.pill.ok {
+  border-color: #16a34a;
+  color: #166534;
+}
+.chat-box {
+  margin-top: 0.35rem;
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid var(--color-border-tertiary);
+  background: var(--color-background-secondary);
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.empty-chat {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-tertiary);
+}
+.chat-msg {
+  background: var(--white);
+  border: 1px solid var(--color-border-tertiary);
+  padding: 0.5rem 0.55rem;
+}
+.chat-msg.artist {
+  border-color: color-mix(in srgb, var(--blue) 40%, var(--color-border-tertiary));
+}
+.chat-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  margin-bottom: 0.2rem;
+}
+.chat-content {
+  white-space: pre-wrap;
+  font-size: 0.87rem;
+  line-height: 1.5;
+}
+.chat-form {
+  margin-top: 0.6rem;
+  display: flex;
+  gap: 0.45rem;
+}
+.chat-form input {
+  flex: 1;
+  border: var(--border);
+  box-shadow: var(--shadow-sm);
+  padding: 0.5rem 0.6rem;
 }
 
 .hint {

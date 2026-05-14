@@ -10,8 +10,11 @@ export type Commission = {
   selected_options: string
   estimated_price: number
   status: string
+  sub_stage: string | null
   creator_note: string | null
   is_paid: number
+  is_waiting: number
+  due_date: string | null
   created_at: number
   updated_at: number
   delivery_r2_key: string | null
@@ -25,6 +28,34 @@ export type CommissionType = {
   base_price: number
   sort_order: number
   is_active: number
+}
+
+export type CommissionDiscussion = {
+  commission_id: string
+  client_template: string
+  artist_summary: string
+  alignment_notes: string
+  client_confirmed: number
+  artist_confirmed: number
+  updated_at: number
+}
+
+export type CommissionMessage = {
+  id: string
+  commission_id: string
+  author_role: "artist" | "client"
+  content: string
+  created_at: number
+}
+
+export type InboxNotification = {
+  id: string
+  type: string
+  title: string
+  body: string
+  link_url: string | null
+  is_read: number
+  created_at: number
 }
 
 // ── 繪師資料 ──────────────────────────
@@ -285,6 +316,148 @@ export async function addRevisionComment(
     .run()
 }
 
+export async function getCommissionDiscussion(db: D1Database, commissionId: string) {
+  let discussion = await db
+    .prepare("SELECT * FROM commission_discussions WHERE commission_id = ?")
+    .bind(commissionId)
+    .first<CommissionDiscussion>()
+
+  if (!discussion) {
+    await db
+      .prepare("INSERT INTO commission_discussions (commission_id) VALUES (?)")
+      .bind(commissionId)
+      .run()
+
+    discussion = await db
+      .prepare("SELECT * FROM commission_discussions WHERE commission_id = ?")
+      .bind(commissionId)
+      .first<CommissionDiscussion>()
+  }
+
+  return discussion
+}
+
+export async function updateCommissionDiscussion(
+  db: D1Database,
+  commissionId: string,
+  patch: Partial<{
+    client_template: string
+    artist_summary: string
+    alignment_notes: string
+    client_confirmed: number
+    artist_confirmed: number
+  }>
+) {
+  const sets: string[] = []
+  const values: unknown[] = []
+
+  if (patch.client_template !== undefined) {
+    sets.push("client_template = ?")
+    values.push(patch.client_template)
+  }
+  if (patch.artist_summary !== undefined) {
+    sets.push("artist_summary = ?")
+    values.push(patch.artist_summary)
+  }
+  if (patch.alignment_notes !== undefined) {
+    sets.push("alignment_notes = ?")
+    values.push(patch.alignment_notes)
+  }
+  if (patch.client_confirmed !== undefined) {
+    sets.push("client_confirmed = ?")
+    values.push(patch.client_confirmed)
+  }
+  if (patch.artist_confirmed !== undefined) {
+    sets.push("artist_confirmed = ?")
+    values.push(patch.artist_confirmed)
+  }
+
+  if (sets.length === 0) return
+
+  values.push(commissionId)
+  await db
+    .prepare(`
+      UPDATE commission_discussions
+      SET ${sets.join(", ")}, updated_at = unixepoch()
+      WHERE commission_id = ?
+    `)
+    .bind(...values)
+    .run()
+}
+
+export async function getCommissionMessages(db: D1Database, commissionId: string) {
+  return db
+    .prepare("SELECT * FROM commission_messages WHERE commission_id = ? ORDER BY created_at ASC")
+    .bind(commissionId)
+    .all<CommissionMessage>()
+}
+
+export async function addCommissionMessage(
+  db: D1Database,
+  commissionId: string,
+  role: "artist" | "client",
+  content: string
+) {
+  const id = nanoid()
+  return db
+    .prepare(`
+      INSERT INTO commission_messages (id, commission_id, author_role, content)
+      VALUES (?, ?, ?, ?)
+    `)
+    .bind(id, commissionId, role, content)
+    .run()
+}
+
+export async function createInboxNotification(
+  db: D1Database,
+  data: {
+    type: string
+    title: string
+    body: string
+    linkUrl?: string | null
+  }
+) {
+  const id = nanoid()
+  return db
+    .prepare(`
+      INSERT INTO notifications (id, type, title, body, link_url)
+      VALUES (?, ?, ?, ?, ?)
+    `)
+    .bind(id, data.type, data.title, data.body, data.linkUrl ?? null)
+    .run()
+}
+
+export async function getInboxNotifications(db: D1Database, limit: number = 40) {
+  return db
+    .prepare(`
+      SELECT id, type, title, body, link_url, is_read, created_at
+      FROM notifications
+      ORDER BY created_at DESC
+      LIMIT ?
+    `)
+    .bind(limit)
+    .all<InboxNotification>()
+}
+
+export async function getUnreadInboxCount(db: D1Database) {
+  return db
+    .prepare("SELECT COUNT(*) as unread_count FROM notifications WHERE is_read = 0")
+    .first<{ unread_count: number }>()
+}
+
+export async function markInboxNotificationRead(db: D1Database, id: string) {
+  return db
+    .prepare("UPDATE notifications SET is_read = 1 WHERE id = ?")
+    .bind(id)
+    .run()
+}
+
+export async function markAllInboxNotificationsRead(db: D1Database) {
+  return db
+    .prepare("UPDATE notifications SET is_read = 1 WHERE is_read = 0")
+    .run()
+}
+
 export type Work = {
   id: string
   title: string | null
@@ -513,4 +686,65 @@ export async function getDeliveryKey(db: D1Database, commissionId: string) {
     .prepare("SELECT delivery_r2_key, delivery_expires FROM commissions WHERE id = ?")
     .bind(commissionId)
     .first<{ delivery_r2_key: string | null; delivery_expires: number | null }>()
+}
+
+export async function setWaiting(db: D1Database, id: string, isWaiting: boolean) {
+  return db
+    .prepare("UPDATE commissions SET is_waiting = ?, updated_at = unixepoch() WHERE id = ?")
+    .bind(isWaiting ? 1 : 0, id)
+    .run()
+}
+
+export async function setDueDate(db: D1Database, id: string, dueDate: string | null) {
+  return db
+    .prepare("UPDATE commissions SET due_date = ?, updated_at = unixepoch() WHERE id = ?")
+    .bind(dueDate, id)
+    .run()
+}
+
+export async function setSubStage(db: D1Database, id: string, subStage: string | null) {
+  return db
+    .prepare("UPDATE commissions SET sub_stage = ?, updated_at = unixepoch() WHERE id = ?")
+    .bind(subStage, id)
+    .run()
+}
+
+export async function getAllActiveCommissions(db: D1Database) {
+  return db
+    .prepare(`
+      SELECT c.*, ct.name as type_name
+      FROM commissions c
+      LEFT JOIN commission_types ct ON c.type_id = ct.id
+      WHERE c.status NOT IN ('pending', 'rejected')
+      ORDER BY c.created_at DESC
+    `)
+    .all<Commission & { type_name: string | null }>()
+}
+
+export async function updateCreatorManage(
+  db: D1Database,
+  patch: {
+    open_status?: string
+    next_open?: string | null
+    open_note?: string | null
+    queue_limit?: number
+    process_config?: string | null
+  }
+) {
+  const sets: string[] = []
+  const vals: unknown[] = []
+  if (patch.open_status  !== undefined) { sets.push("open_status = ?");  vals.push(patch.open_status) }
+  if (patch.next_open    !== undefined) { sets.push("next_open = ?");     vals.push(patch.next_open) }
+  if (patch.open_note    !== undefined) { sets.push("open_note = ?");     vals.push(patch.open_note) }
+  if (patch.queue_limit  !== undefined) { sets.push("queue_limit = ?");   vals.push(patch.queue_limit) }
+  if (patch.process_config !== undefined) { sets.push("process_config = ?"); vals.push(patch.process_config) }
+  if (patch.open_status === 'open')   { sets.push("is_open = 1") }
+  if (patch.open_status === 'closed') { sets.push("is_open = 0") }
+  if (patch.open_status === 'paused') { sets.push("is_open = 0") }
+  if (sets.length === 0) return
+  vals.push('main')
+  return db
+    .prepare(`UPDATE creators SET ${sets.join(', ')} WHERE id = ?`)
+    .bind(...vals)
+    .run()
 }
