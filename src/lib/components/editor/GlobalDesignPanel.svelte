@@ -11,7 +11,7 @@
 
   let { design, onpatch, onclose, uploading = false, onupload }: Props = $props()
 
-  let sec = $state({ bg: true, font: false, palette: false, layout: false })
+  let openSec = $state<string>('bg')
   let newColor = $state('#7ab8d8')
   let customFontFamily = $state('')
   let customFontUrl = $state('')
@@ -70,12 +70,12 @@
 
       <!-- 背景設定 -->
       <div class="section">
-        <button class="sec-hdr" onclick={() => sec = { ...sec, bg: !sec.bg }}>
+        <button class="sec-hdr" onclick={() => openSec = openSec === 'bg' ? '' : 'bg'}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
           <span>背景設定</span>
-          <span class="chevron" class:open={sec.bg}>›</span>
+          <span class="chevron" class:open={openSec === 'bg'}>›</span>
         </button>
-        {#if sec.bg}
+        {#if openSec === 'bg'}
           <div class="sec-body">
             <!-- Upload zone -->
             <label class="upload-zone" class:has-img={!!design.bgImage}>
@@ -163,12 +163,12 @@
 
       <!-- 字型與主色 -->
       <div class="section">
-        <button class="sec-hdr" onclick={() => sec = { ...sec, font: !sec.font }}>
+        <button class="sec-hdr" onclick={() => openSec = openSec === 'font' ? '' : 'font'}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" x2="15" y1="20" y2="20"/><line x1="12" x2="12" y1="4" y2="20"/></svg>
           <span>字型與主色</span>
-          <span class="chevron" class:open={sec.font}>›</span>
+          <span class="chevron" class:open={openSec === 'font'}>›</span>
         </button>
-        {#if sec.font}
+        {#if openSec === 'font'}
           <div class="sec-body">
             <div class="p-label">字體</div>
             <select class="p-sel" value={fontSelectValue}
@@ -256,12 +256,12 @@
 
       <!-- 主題色彩庫 -->
       <div class="section">
-        <button class="sec-hdr" onclick={() => sec = { ...sec, palette: !sec.palette }}>
+        <button class="sec-hdr" onclick={() => openSec = openSec === 'palette' ? '' : 'palette'}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="1"/></svg>
           <span>主題色彩庫</span>
-          <span class="chevron" class:open={sec.palette}>›</span>
+          <span class="chevron" class:open={openSec === 'palette'}>›</span>
         </button>
-        {#if sec.palette}
+        {#if openSec === 'palette'}
           <div class="sec-body">
             <div class="pal-grid">
               {#each design.palette as c, i}
@@ -281,12 +281,12 @@
 
       <!-- 佈局寬度 -->
       <div class="section">
-        <button class="sec-hdr" onclick={() => sec = { ...sec, layout: !sec.layout }}>
+        <button class="sec-hdr" onclick={() => openSec = openSec === 'layout' ? '' : 'layout'}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
           <span>佈局寬度</span>
-          <span class="chevron" class:open={sec.layout}>›</span>
+          <span class="chevron" class:open={openSec === 'layout'}>›</span>
         </button>
-        {#if sec.layout}
+        {#if openSec === 'layout'}
           <div class="sec-body">
             <div class="layout-row">
               <button class="lay-btn" class:on={design.layoutWidth==='narrow'}
@@ -325,16 +325,16 @@
   .close-btn { width:1.75rem; height:1.75rem; border-radius:999px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:.875rem; background:color-mix(in srgb,var(--ink) 5%,transparent); color:color-mix(in srgb,var(--ink) 30%,transparent); transition:background .15s }
   .close-btn:hover { background:color-mix(in srgb,var(--ink) 10%,transparent) }
 
-  .gd-body { overflow-y:auto; flex:1; padding:.75rem; display:flex; flex-direction:column; gap:.5rem; min-height:0; }
-  .gd-body::-webkit-scrollbar { width:4px }
-  .gd-body::-webkit-scrollbar-thumb { background:var(--blue); border-radius:99px }
+  .gd-body { flex:1; padding:.75rem; display:flex; flex-direction:column; gap:.5rem; min-height:0; overflow-y:auto; }
 
-  .section { border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:1rem; overflow:hidden }
+  .section { border:1px solid color-mix(in srgb,var(--ink) 8%,transparent); border-radius:1rem; overflow:hidden; flex-shrink:0 }
   .sec-hdr { display:flex; align-items:center; gap:.5rem; width:100%; padding:.75rem 1rem; background:white; border:none; cursor:pointer; font-family:inherit; font-size:.8125rem; font-weight:700; color:color-mix(in srgb,var(--ink) 65%,transparent); text-align:left; transition:background .1s }
   .sec-hdr:hover { background:color-mix(in srgb,var(--ink) 3%,transparent) }
   .chevron { margin-left:auto; font-size:1rem; display:inline-block; transform:rotate(90deg); transition:transform .2s; color:color-mix(in srgb,var(--ink) 25%,transparent) }
   .chevron.open { transform:rotate(-90deg) }
-  .sec-body { padding:.75rem 1rem; display:flex; flex-direction:column; gap:.5rem; border-top:1px solid color-mix(in srgb,var(--ink) 5%,transparent); background:color-mix(in srgb,var(--cream) 25%,transparent) }
+  .sec-body { padding:.75rem 1rem; display:flex; flex-direction:column; gap:.5rem; border-top:1px solid color-mix(in srgb,var(--ink) 5%,transparent); background:color-mix(in srgb,var(--cream) 25%,transparent); max-height:55vh; overflow-y:auto }
+  .sec-body::-webkit-scrollbar { width:3px }
+  .sec-body::-webkit-scrollbar-thumb { background:color-mix(in srgb,var(--blue) 50%,transparent); border-radius:99px }
 
   /* Upload */
   .upload-zone { display:flex; align-items:center; justify-content:center; width:100%; height:5rem; border:1.5px dashed color-mix(in srgb,var(--ink) 15%,transparent); border-radius:.875rem; cursor:pointer; overflow:hidden; position:relative; background:color-mix(in srgb,var(--cream) 50%,transparent); transition:border-color .15s }
