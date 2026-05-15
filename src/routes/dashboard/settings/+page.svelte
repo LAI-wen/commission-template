@@ -3,18 +3,27 @@
   import { enhance } from "$app/forms"
   import type { PageData, ActionData } from "./$types"
   import {
-    PALETTES, FONTS, type PaletteKey, type FontKey, type ThemeConfig,
-    DEFAULT_THEME, loadTheme, saveTheme, applyTheme,
+    PALETTES, FONTS, type PaletteKey, type FontKey, type ThemeConfig, type CustomColors,
+    DEFAULT_THEME, DEFAULT_CUSTOM_COLORS, loadTheme, saveTheme, applyTheme,
+    loadCustomColors, saveCustomColors, buildCustomVars,
   } from "$lib/theme"
   import { DEFAULT_GLOBAL } from "$lib/components/editor/globalDesign"
 
   let { data, form }: { data: PageData; form: ActionData } = $props()
 
   /* ── Dashboard theme ─────────────────────────── */
-  let theme = $state<ThemeConfig>(DEFAULT_THEME)
-  let themeSaved = $state(false)
+  let theme        = $state<ThemeConfig>(DEFAULT_THEME)
+  let themeSaved   = $state(false)
+  let customColors = $state<CustomColors>([...DEFAULT_CUSTOM_COLORS] as CustomColors)
 
-  onMount(() => { theme = loadTheme() })
+  const COLOR_LABELS = ['主色', '強調色', '背景色', '輔色']
+  const PRESET_KEYS  = (Object.keys(PALETTES) as PaletteKey[]).filter(k => k !== 'custom')
+  const FONT_KEYS    = Object.keys(FONTS) as FontKey[]
+
+  onMount(() => {
+    theme = loadTheme()
+    customColors = loadCustomColors()
+  })
 
   function selectPalette(p: PaletteKey) {
     theme = { ...theme, palette: p }; applyTheme(theme); saveTheme(theme); flash()
@@ -26,8 +35,29 @@
     themeSaved = true; setTimeout(() => { themeSaved = false }, 1600)
   }
 
-  const PALETTE_KEYS = Object.keys(PALETTES) as PaletteKey[]
-  const FONT_KEYS    = Object.keys(FONTS)    as FontKey[]
+  function updateCustomColor(i: number, hex: string) {
+    const next = [...customColors] as CustomColors
+    next[i] = hex
+    customColors = next
+    saveCustomColors(customColors)
+    if (theme.palette === 'custom') {
+      const vars = buildCustomVars(customColors)
+      const root = document.documentElement
+      for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v)
+    }
+    flash()
+  }
+
+  function copyPreset(key: PaletteKey) {
+    customColors = [...PALETTES[key].swatch] as CustomColors
+    saveCustomColors(customColors)
+    if (theme.palette === 'custom') {
+      const vars = buildCustomVars(customColors)
+      const root = document.documentElement
+      for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v)
+    }
+    flash()
+  }
 
   /* ── Layout / radius (saved to DB) ──────────── */
   let layoutWidth = $state<'narrow' | 'full'>(data.layoutWidth ?? DEFAULT_GLOBAL.layoutWidth)
@@ -75,7 +105,7 @@
     <!-- ── 配色 ── -->
     {#if tab === 'palette'}
       <div class="palette-grid">
-        {#each PALETTE_KEYS as key}
+        {#each PRESET_KEYS as key}
           {@const p = PALETTES[key]}
           <button class="palette-card" class:active={theme.palette === key}
             onclick={() => selectPalette(key)} title={p.nameEn}>
@@ -86,7 +116,47 @@
             <div class="card-sub">{p.nameEn}</div>
           </button>
         {/each}
+        <!-- 自訂 card -->
+        <button class="palette-card custom-card" class:active={theme.palette === 'custom'}
+          onclick={() => selectPalette('custom')}>
+          <div class="palette-swatches">
+            {#each customColors as c}<div class="swatch" style="background:{c}"></div>{/each}
+          </div>
+          <div class="card-name">自訂</div>
+          <div class="card-sub">Custom</div>
+        </button>
       </div>
+
+      <!-- 自訂色票展開面板 -->
+      {#if theme.palette === 'custom'}
+        <div class="custom-panel">
+          <div class="custom-panel-head">
+            <span class="custom-panel-label">自訂顏色</span>
+            <div class="preset-copy-row">
+              <span class="preset-copy-hint">從預設複製：</span>
+              {#each PRESET_KEYS as key}
+                <button class="preset-copy-btn" onclick={() => copyPreset(key)} title={PALETTES[key].name}>
+                  {#each PALETTES[key].swatch as c}
+                    <span class="mini-swatch" style="background:{c}"></span>
+                  {/each}
+                </button>
+              {/each}
+            </div>
+          </div>
+          <div class="custom-colors-row">
+            {#each customColors as c, i}
+              <label class="custom-color-item">
+                <div class="custom-swatch-wrap">
+                  <div class="custom-swatch" style="background:{c}"></div>
+                  <input type="color" class="color-input" value={c}
+                    oninput={(e) => updateCustomColor(i, (e.target as HTMLInputElement).value)} />
+                </div>
+                <span class="custom-color-label">{COLOR_LABELS[i]}</span>
+              </label>
+            {/each}
+          </div>
+        </div>
+      {/if}
 
     <!-- ── 字型 ── -->
     {:else if tab === 'font'}
@@ -237,7 +307,7 @@
   .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
 
   /* ── Palette ── */
-  .palette-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
+  .palette-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; }
   .palette-card {
     background: var(--white); border: 2px solid var(--color-border-tertiary);
     padding: 0.6rem 0.5rem; cursor: pointer; text-align: center;
@@ -248,6 +318,34 @@
   .palette-card.active { border-color: var(--blue); box-shadow: var(--shadow-sm); transform: translateY(-2px); }
   .palette-swatches { display: flex; height: 28px; overflow: hidden; border: 1px solid rgba(0,0,0,0.08); border-radius: 2px; margin-bottom: 0.4rem; }
   .swatch { flex: 1; }
+  .custom-card { border-style: dashed; }
+  .custom-card.active { border-style: solid; }
+
+  /* ── Custom panel ── */
+  .custom-panel {
+    margin-top: 1rem; padding: 1rem;
+    background: color-mix(in srgb, var(--blue) 4%, transparent);
+    border: 1px solid color-mix(in srgb, var(--blue) 20%, transparent);
+    border-radius: var(--border-radius-md);
+  }
+  .custom-panel-head { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 1rem; margin-bottom: 0.875rem; }
+  .custom-panel-label { font-size: 0.75rem; font-weight: 700; color: var(--color-text-secondary); }
+  .preset-copy-row { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+  .preset-copy-hint { font-size: 0.7rem; color: var(--color-text-tertiary); }
+  .preset-copy-btn {
+    display: flex; gap: 1px; padding: 3px; border-radius: 4px;
+    border: 1px solid var(--color-border-tertiary); background: var(--white);
+    cursor: pointer; transition: border-color 0.1s;
+  }
+  .preset-copy-btn:hover { border-color: var(--blue); }
+  .mini-swatch { display: block; width: 10px; height: 10px; border-radius: 1px; }
+
+  .custom-colors-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .custom-color-item { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; cursor: pointer; }
+  .custom-swatch-wrap { position: relative; width: 44px; height: 44px; }
+  .custom-swatch { width: 100%; height: 100%; border-radius: 50%; border: 2px solid rgba(0,0,0,0.1); }
+  .color-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; border: none; padding: 0; }
+  .custom-color-label { font-size: 0.7rem; font-weight: 600; color: var(--color-text-secondary); }
 
   /* ── Font ── */
   .font-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
@@ -317,8 +415,12 @@
   .btn-hub:hover { transform: translate(-1px,-1px); box-shadow: var(--shadow-md); }
   .hub-saved { font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700; color: #16a34a; }
 
-  @media (max-width: 720px) {
+  @media (max-width: 800px) {
     .palette-grid { grid-template-columns: repeat(3, 1fr); }
     .font-grid    { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 480px) {
+    .palette-grid { grid-template-columns: repeat(2, 1fr); }
+    .custom-colors-row { gap: 0.75rem; }
   }
 </style>

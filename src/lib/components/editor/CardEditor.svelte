@@ -343,7 +343,7 @@
 
           {#if block.type === 'avatar'}
             <div class="w-full text-center">
-              <div class="avatar-frame" style="border-radius:{s.radius};border:{s.borderWidth} {s.borderStyle} {s.borderColor};">
+              <div class="avatar-frame" style="border-radius:{s.radius};border:{s.borderWidth} {s.borderStyle} {s.borderColor};opacity:{s.opacity/100};">
                 <img src={block.data.src} alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:{avR(block.id,block.data.shape)};" />
               </div>
             </div>
@@ -682,11 +682,18 @@
             <div class="two-col">
               <div>
                 <div class="p-label">邊框粗細</div>
-                <select class="p-select" value={s.borderWidth} onchange={(e) => setStyle(selBlock.id,'borderWidth',(e.target as HTMLSelectElement).value)}>
+                <select class="p-select" value={['0px','1px','2px','3px'].includes(s.borderWidth) ? s.borderWidth : 'custom'}
+                  onchange={(e) => { const v = (e.target as HTMLSelectElement).value; if (v !== 'custom') setStyle(selBlock.id,'borderWidth',v) }}>
+                  <option value="0px">0px</option>
                   <option value="1px">1px</option>
                   <option value="2px">2px</option>
                   <option value="3px">3px</option>
+                  <option value="custom">自訂</option>
                 </select>
+                {#if !['0px','1px','2px','3px'].includes(s.borderWidth)}
+                  <input class="p-input-sm" type="text" value={s.borderWidth} placeholder="4px"
+                    oninput={(e) => setStyle(selBlock.id,'borderWidth',(e.target as HTMLInputElement).value)} />
+                {/if}
               </div>
               <div>
                 <div class="p-label">邊框樣式</div>
@@ -904,6 +911,7 @@
   .p-textarea { width: 100%; padding: .55rem .7rem; border: 1px solid color-mix(in srgb,var(--ink) 12%,transparent); border-radius: .875rem; background: color-mix(in srgb,var(--cream) 50%,transparent); font-size: .8125rem; color: var(--ink); outline: none; resize: none; font-family: inherit; min-height: 80px; transition: border-color .15s, background .15s; }
   .p-textarea:focus { border-color: var(--blue); background: white; }
   .p-select { width: 100%; padding: .4rem .7rem; border: 1px solid color-mix(in srgb,var(--ink) 12%,transparent); border-radius: .75rem; background: white; font-size: .78rem; color: var(--ink); outline: none; font-family: inherit; cursor: pointer; }
+  .p-input-sm { margin-top: .35rem; width: 100%; padding: .35rem .7rem; border: 1px solid color-mix(in srgb,var(--ink) 12%,transparent); border-radius: .75rem; background: white; font-size: .78rem; color: var(--ink); outline: none; font-family: inherit; }
   .btn-row { display: flex; gap: .5rem; }
   .size-btn { flex: 1; padding: .4rem; border-radius: .75rem; border: 1px solid color-mix(in srgb,var(--ink) 10%,transparent); background: color-mix(in srgb,var(--cream) 60%,transparent); font-size: .75rem; font-weight: 700; color: color-mix(in srgb,var(--ink) 40%,transparent); cursor: pointer; font-family: inherit; transition: all .15s; }
   .size-btn.active { background: var(--ink); color: white; border-color: var(--ink); }
