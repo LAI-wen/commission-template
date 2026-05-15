@@ -1,11 +1,10 @@
 import { getCreator, getCommissionTypes } from "./db"
 
-const HUB_URL = "https://commission-hub.pages.dev"
-
 export async function pushToHub(env: Env): Promise<boolean> {
   const creator = await getCreator(env.DB)
   if (!creator?.hub_token) return false
 
+  const hubUrl = env.HUB_URL || "https://commission-hub.pages.dev"
   const typesResult = await getCommissionTypes(env.DB)
   const siteUrl = (creator as any).site_url || env.ORIGIN
 
@@ -30,7 +29,7 @@ export async function pushToHub(env: Env): Promise<boolean> {
   }
 
   try {
-    await fetch(`${HUB_URL}/api/sync`, {
+    await fetch(`${hubUrl}/api/sync`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
