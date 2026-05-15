@@ -835,3 +835,10 @@ export async function markAllAnonMessagesRead(db: D1Database) {
     .prepare("UPDATE anon_messages SET is_read = 1 WHERE is_read = 0")
     .run()
 }
+
+export async function getActiveCommissionCount(db: D1Database): Promise<number> {
+  const row = await db
+    .prepare("SELECT COUNT(*) as cnt FROM commissions WHERE status IN ('accepted','in_progress','revision')")
+    .first<{ cnt: number }>()
+  return row?.cnt ?? 0
+}

@@ -31,12 +31,10 @@
       localStorage.setItem(storageKey, "true")
     }
   }
-
-  const bg = $derived(data.bgColor || "rgba(0,0,0,0.05)")
 </script>
 
 {#if visible}
-  <div class="notice-block" style="--bg: {bg}; --accent: {accentColor}">
+  <div class="notice-block" style="--accent: {accentColor}">
     <div class="content">
       {#if data.icon}<span class="icon">{data.icon}</span>{/if}
       <p class="text">{t(data.text, lang) || "公告內容..."}</p>
@@ -48,10 +46,55 @@
 {/if}
 
 <style>
-  .notice-block { position: relative; padding: 16px 20px; background: var(--bg); border-radius: 16px; margin: 1rem 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  .content { display: flex; align-items: center; gap: 12px; flex: 1; }
-  .icon { font-size: 1.2rem; }
-  .text { margin: 0; font-size: 0.95rem; font-weight: 500; line-height: 1.5; }
-  .close-btn { background: none; border: none; font-size: 14px; color: #888; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: color 0.2s; }
-  .close-btn:hover { color: #111; }
+  .notice-block {
+    position: relative;
+    padding: 1.25rem 1.5rem;
+    background: color-mix(in srgb, var(--accent) 10%, var(--white));
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+  }
+
+  .icon {
+    font-size: 1.2rem;
+  }
+
+  .text {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  .close-btn {
+    background: none;
+    border: 1px solid var(--color-border-secondary);
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.1s, color 0.1s;
+  }
+
+  .close-btn:hover {
+    background: var(--ink);
+    color: var(--white);
+    border-color: var(--ink);
+  }
 </style>

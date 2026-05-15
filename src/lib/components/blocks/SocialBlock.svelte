@@ -35,36 +35,29 @@
 </script>
 
 <div class="social-block" style="--accent: {accentColor}">
-  <div class="links-container {displayStyle}">
-    {#each links as link}
-      {@const platform = getPlatform(link.url)}
-      <a 
-        href={link.url} 
-        target="_blank" 
-        rel="noopener" 
-        class="link-item" 
-        style="--p-color: {platform.color}"
-        title={link.label || platform.name}
-      >
-        <span class="icon">{platform.icon}</span>
-        {#if displayStyle === "pill"}
-          <span class="label">{link.label || platform.name}</span>
-        {/if}
-      </a>
-    {/each}
-  </div>
+  {#each links as link}
+    {@const platform = getPlatform(link.url)}
+    <a
+      href={link.url}
+      target="_blank"
+      rel="noopener"
+      class="link-item {displayStyle}"
+      title={link.label || platform.name}
+    >
+      <span class="icon">{platform.icon}</span>
+      {#if displayStyle === "pill"}
+        <span class="label">{link.label || platform.name}</span>
+      {/if}
+    </a>
+  {/each}
 </div>
 
 <style>
   .social-block {
-    padding: 1rem 0;
-  }
-
-  .links-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    justify-content: center;
+    gap: 10px;
+    padding: 1rem 0;
   }
 
   .link-item {
@@ -72,39 +65,36 @@
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    color: inherit;
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: var(--ink);
+    background: var(--white);
+    border: var(--border);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.1s, box-shadow 0.1s;
   }
 
-  /* Icon Style */
-  .icon .link-item {
+  .link-item:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Icon style */
+  .link-item.icon {
     width: 44px;
     height: 44px;
-    border-radius: 50%;
-    background: #f5f5f5;
     font-size: 1.2rem;
   }
-  .icon .link-item:hover {
-    background: var(--p-color);
-    color: white;
-    transform: translateY(-4px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  }
 
-  /* Pill Style */
-  .pill .link-item {
+  /* Pill style */
+  .link-item.pill {
     padding: 8px 16px;
-    border-radius: 99px;
-    background: #f5f5f5;
     gap: 8px;
     font-size: 0.9rem;
     font-weight: 600;
   }
-  .pill .link-item:hover {
-    background: #eee;
-    transform: translateY(-2px);
+
+  .link-item.pill .icon {
+    font-size: 1.1rem;
   }
-  .pill .link-item .icon { font-size: 1.1rem; }
 
   .label {
     white-space: nowrap;

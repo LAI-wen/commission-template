@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { marked } from 'marked'
   import type { GlobalDesign } from '$lib/components/editor/globalDesign'
   import type { CommissionType } from '$lib/db'
 
@@ -14,9 +15,14 @@
     device?: 'mobile' | 'desktop'
     globalDesign?: GlobalDesign | null
     types?: CommissionType[]
+    queueData?: { current: number; max: number }
   }
 
-  let { blocks = [], overrides = {}, device = 'desktop', globalDesign = null, types = [] }: Props = $props()
+  let { blocks = [], overrides = {}, device = 'desktop', globalDesign = null, types = [], queueData }: Props = $props()
+
+  function renderMd(text: string): string {
+    return marked.parse(text ?? '', { async: false }) as string
+  }
 
   const THEME = $derived<Required<StyleMap>>({
     bgColor:     globalDesign?.bgBlockColor  ?? 'var(--ink)',
@@ -98,7 +104,10 @@
           style={`border-radius: ${avR(block.id, block.data.shape)}`}
         />
       {:else if block.type === 'profile_name'}
-        <h1 class="profile-name">{block.data.name}</h1>
+        {@const nameSize = block.data.size === 'sm' ? '1.125rem' : block.data.size === 'base' ? '1.5rem' : block.data.size === 'xl' ? '2.5rem' : '1.875rem'}
+        <div style="text-align:{block.data.align ?? 'center'};">
+          <h1 class="profile-name" style="font-size:{nameSize};">{block.data.name}</h1>
+        </div>
       {:else if block.type === 'section'}
         <div class="section-wrap">
           <div class="section-inner">
@@ -108,7 +117,11 @@
           </div>
         </div>
       {:else if block.type === 'image'}
-        <img src={block.data.src} alt={block.data.alt} style="width: 100%; height: auto; border-radius: inherit;" />
+        {@const imgW = block.data.width === 'small' ? '40%' : block.data.width === 'medium' ? '70%' : '100%'}
+        {@const imgJ = block.data.align === 'left' ? 'flex-start' : block.data.align === 'right' ? 'flex-end' : 'center'}
+        <div style="display:flex;justify-content:{imgJ};">
+          <img src={block.data.src} alt={block.data.alt ?? ''} style="width:{imgW};height:auto;object-fit:cover;border-radius:inherit;" />
+        </div>
       {:else if block.type === 'gallery'}
         <div class="gallery-grid" style={`grid-template-columns: repeat(${block.data.cols}, 1fr)`}>
           {#each block.data.images as img}
@@ -164,8 +177,12 @@
           {/if}
         </div>
       {:else if block.type === 'text'}
-        <div class="text-block">
-          <p>{block.data.text}</p>
+        <div class="text-block" style="text-align:{block.data.align ?? 'left'};font-size:{block.data.size==='sm'?'.75rem':block.data.size==='lg'?'1.125rem':block.data.size==='xl'?'1.25rem':'.875rem'};">
+          {#if block.data.format === 'md'}
+            {@html renderMd(block.data.content ?? '')}
+          {:else}
+            <p style="margin:0;line-height:1.625;">{block.data.content ?? ''}</p>
+          {/if}
         </div>
       {:else if block.type === 'visitor'}
         <div class="visitor-block">
@@ -191,13 +208,15 @@
           </div>
         </div>
       {:else if block.type === 'queue'}
+        {@const qMax = queueData?.max ?? block.data.max ?? 10}
+        {@const qCur = queueData?.current ?? block.data.current ?? 0}
         <div class="queue-block">
-          <div class="queue-label">排單進度</div>
-          <div class="queue-count">2/5</div>
+          <div class="queue-label">{block.data.label ?? '排單進度'}</div>
+          <div class="queue-count">{qCur} / {qMax}</div>
           <div class="queue-bar-track">
-            <div class="queue-bar-fill" style="width: 40%;"></div>
+            <div class="queue-bar-fill" style="width:{(qCur / Math.max(qMax, 1)) * 100}%;"></div>
           </div>
-          <div class="queue-remain">還有 3 個位置</div>
+          <div class="queue-remain">剩餘 {Math.max(qMax - qCur, 0)} 個名額</div>
         </div>
       {:else}
         <div class="generic-block">{ICONS[block.type] ?? '▢'} {block.type}</div>

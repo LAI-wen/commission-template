@@ -1,4 +1,4 @@
-import { getCreator, updateCreatorManage, updatePageConfig, getCommissionTypes } from "$lib/db"
+import { getCreator, updateCreatorManage, updatePageConfig, getCommissionTypes, getActiveCommissionCount } from "$lib/db"
 import { fail } from "@sveltejs/kit"
 import { z } from "zod"
 import type { Actions, PageServerLoad } from "./$types"
@@ -25,16 +25,23 @@ export const load: PageServerLoad = async ({ platform }) => {
         contact_discord: "",
         avatar_url: "/avatar.jpg",
         page_config: null,
+        queue_limit: 10,
       },
       types: [],
+      queueData: { current: 0, max: 10 },
     }
   }
 
-  const [creator, typesResult] = await Promise.all([
+  const [creator, typesResult, activeCnt] = await Promise.all([
     getCreator(db),
     getCommissionTypes(db),
+    getActiveCommissionCount(db),
   ])
-  return { creator, types: typesResult.results }
+  return {
+    creator,
+    types: typesResult.results,
+    queueData: { current: activeCnt, max: Number(creator?.queue_limit) || 10 },
+  }
 }
 
 export const actions: Actions = {

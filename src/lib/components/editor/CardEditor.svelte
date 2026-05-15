@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { marked } from 'marked'
   import GlobalDesignPanel from './GlobalDesignPanel.svelte'
   import { DEFAULT_GLOBAL } from './globalDesign'
   import type { GlobalDesign } from './globalDesign'
@@ -13,8 +14,13 @@
   interface Props {
     creator?: { display_name?: any; avatar_url?: string | null; [k: string]: any } | null
     types?: CommissionType[]
+    queueData?: { current: number; max: number }
   }
-  let { creator = null, types = [] }: Props = $props()
+  let { creator = null, types = [], queueData }: Props = $props()
+
+  function renderMd(text: string): string {
+    return marked.parse(text ?? '', { async: false }) as string
+  }
 
   function extractName(n: any): string {
     if (!n) return '創作者名稱'
@@ -209,6 +215,26 @@
     const id = toastN++
     toasts = [...toasts, { id, msg }]
     setTimeout(() => { toasts = toasts.filter(t => t.id !== id) }, 2100)
+  }
+
+  // ── 圖庫圖片上傳 / 刪除 ──
+  async function uploadGalleryImage(file: File, blockId: string) {
+    uploading = true
+    try {
+      const fd = new FormData(); fd.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      if (!res.ok) { toast('上傳失敗'); return }
+      const { url } = await res.json() as { url: string }
+      const block = blocks.find(b => b.id === blockId)
+      upd(blockId, 'images', [...(block?.data.images ?? []), url])
+      toast('✓ 圖片已上傳')
+    } catch { toast('上傳失敗') }
+    finally { uploading = false }
+  }
+  function removeGalleryImage(blockId: string, idx: number) {
+    const imgs = [...(blocks.find(b => b.id === blockId)?.data.images ?? [])]
+    imgs.splice(idx, 1)
+    upd(blockId, 'images', imgs)
   }
 
   // ── 背景圖片上傳 ──
@@ -422,8 +448,12 @@
             </div>
 
           {:else if block.type === 'text'}
-            <div class="text-block" style="{bg}text-align:{block.data.align ?? 'left'};">
-              <p style="font-size:{block.data.size==='sm'?'.75rem':block.data.size==='lg'?'1.125rem':block.data.size==='xl'?'1.25rem':'.875rem'};">{block.data.content ?? '在此輸入文字...'}</p>
+            <div class="text-block" style="{bg}text-align:{block.data.align ?? 'left'};font-size:{block.data.size==='sm'?'.75rem':block.data.size==='lg'?'1.125rem':block.data.size==='xl'?'1.25rem':'.875rem'};">
+              {#if block.data.format === 'md'}
+                {@html renderMd(block.data.content ?? '')}
+              {:else}
+                <p style="margin:0;line-height:1.625;">{block.data.content ?? '在此輸入文字...'}</p>
+              {/if}
             </div>
 
           {:else if block.type === 'visitor'}
@@ -450,13 +480,15 @@
             </div>
 
           {:else if block.type === 'queue'}
+            {@const qMax = queueData?.max ?? block.data.max ?? 10}
+            {@const qCur = queueData?.current ?? block.data.current ?? 0}
             <div class="queue-block" style={bg}>
-              <div class="queue-label">目前排單</div>
-              <div class="queue-count">{block.data.current ?? 3} / {block.data.max ?? 10}</div>
+              <div class="queue-label">{block.data.label ?? '排單進度'}</div>
+              <div class="queue-count">{qCur} / {qMax}</div>
               <div class="queue-bar-track">
-                <div class="queue-bar-fill" style="width:{((block.data.current??3)/(block.data.max??10))*100}%;"></div>
+                <div class="queue-bar-fill" style="width:{(qCur / Math.max(qMax, 1)) * 100}%;"></div>
               </div>
-              <div class="queue-remain">剩餘 {(block.data.max??10)-(block.data.current??3)} 個名額</div>
+              <div class="queue-remain">剩餘 {Math.max(qMax - qCur, 0)} 個名額</div>
             </div>
 
           {:else}
@@ -576,8 +608,18 @@
 
         {:else if selBlock.type === 'text'}
           <div class="field-group">
-            <div class="p-label">文字內容</div>
+            <div class="p-label-row">
+              <span class="p-label" style="margin:0;">文字內容</span>
+              <label class="md-toggle">
+                <input type="checkbox" checked={selBlock.data.format === 'md'}
+                  onchange={(e) => upd(selBlock.id,'format',(e.target as HTMLInputElement).checked ? 'md' : 'plain')} />
+                <span class="md-badge" class:md-on={selBlock.data.format === 'md'}>Markdown</span>
+              </label>
+            </div>
             <textarea class="p-textarea" oninput={(e) => upd(selBlock.id,'content',(e.target as HTMLTextAreaElement).value)}>{selBlock.data.content ?? ''}</textarea>
+            {#if selBlock.data.format === 'md'}
+              <div class="md-hint">支援 **粗體** *斜體* [連結](url) # 標題 - 清單</div>
+            {/if}
             <div class="p-label" style="margin-top:.5rem;">字體大小</div>
             <div class="btn-row">
               <button class="size-btn" class:active={selBlock.data.size==='sm'}   onclick={() => upd(selBlock.id,'size','sm')}>小</button>
@@ -646,6 +688,36 @@
                 <button class="size-btn" class:active={selBlock.data.cols===c} onclick={() => upd(selBlock.id,'cols',c)}>{c}</button>
               {/each}
             </div>
+            <div class="p-label" style="margin-top:.75rem;">圖片</div>
+            <div class="gallery-edit-grid">
+              {#each (selBlock.data.images ?? []) as img, i}
+                <div class="gallery-edit-item">
+                  <img src={img} alt="" />
+                  <button class="gallery-del" onclick={() => removeGalleryImage(selBlock.id, i)} aria-label="刪除">✕</button>
+                </div>
+              {/each}
+              <label class="gallery-add" class:uploading>
+                {#if uploading}<span>⏳</span>{:else}<span>＋</span>{/if}
+                <input type="file" accept="image/*" multiple style="display:none;" disabled={uploading}
+                  onchange={async (e) => {
+                    const files = Array.from((e.target as HTMLInputElement).files ?? [])
+                    for (const f of files) await uploadGalleryImage(f, selBlock.id)
+                    ;(e.target as HTMLInputElement).value = ''
+                  }} />
+              </label>
+            </div>
+          </div>
+
+        {:else if selBlock.type === 'queue'}
+          <div class="field-group">
+            <div class="p-label">標籤文字</div>
+            <input class="p-input" value={selBlock.data.label ?? '排單進度'} oninput={(e) => upd(selBlock.id,'label',(e.target as HTMLInputElement).value)} />
+            <div class="p-label" style="margin-top:.4rem;">上限名額</div>
+            <input class="p-input" type="number" min="1" value={selBlock.data.max ?? queueData?.max ?? 10}
+              oninput={(e) => upd(selBlock.id,'max',+(e.target as HTMLInputElement).value)} />
+            {#if queueData}
+              <div class="md-hint">目前進行中：{queueData.current} 件（即時資料）</div>
+            {/if}
           </div>
 
         {:else if selBlock.type === 'visitor'}
@@ -946,6 +1018,20 @@
   .p-textarea:focus { border-color: var(--blue); background: white; }
   .p-select { width: 100%; padding: .4rem .7rem; border: 1px solid color-mix(in srgb,var(--ink) 12%,transparent); border-radius: .75rem; background: white; font-size: .78rem; color: var(--ink); outline: none; font-family: inherit; cursor: pointer; }
   .p-input-sm { margin-top: .35rem; width: 100%; padding: .35rem .7rem; border: 1px solid color-mix(in srgb,var(--ink) 12%,transparent); border-radius: .75rem; background: white; font-size: .78rem; color: var(--ink); outline: none; font-family: inherit; }
+  .p-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: .35rem; }
+  .md-toggle { display: flex; align-items: center; gap: .3rem; cursor: pointer; }
+  .md-toggle input { display: none; }
+  .md-badge { font-size: .68rem; font-weight: 700; padding: .15rem .45rem; border-radius: .4rem; background: color-mix(in srgb,var(--ink) 8%,transparent); color: var(--ink); opacity: .5; transition: all .15s; }
+  .md-badge.md-on { background: var(--blue); color: white; opacity: 1; }
+  .md-hint { font-size: .68rem; color: color-mix(in srgb,var(--ink) 45%,transparent); margin-top: .3rem; font-family: var(--font-mono, monospace); }
+  .gallery-edit-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: .4rem; }
+  .gallery-edit-item { position: relative; aspect-ratio: 1; border-radius: .5rem; overflow: hidden; }
+  .gallery-edit-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .gallery-del { position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; border-radius: 50%; background: rgba(0,0,0,.6); color: white; border: none; cursor: pointer; font-size: .6rem; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .15s; }
+  .gallery-edit-item:hover .gallery-del { opacity: 1; }
+  .gallery-add { aspect-ratio: 1; border: 1.5px dashed color-mix(in srgb,var(--ink) 20%,transparent); border-radius: .5rem; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; color: color-mix(in srgb,var(--ink) 35%,transparent); transition: border-color .15s; }
+  .gallery-add:hover { border-color: var(--ink); }
+  .gallery-add.uploading { opacity: .5; cursor: not-allowed; }
   .btn-row { display: flex; gap: .5rem; }
   .size-btn { flex: 1; padding: .4rem; border-radius: .75rem; border: 1px solid color-mix(in srgb,var(--ink) 10%,transparent); background: color-mix(in srgb,var(--cream) 60%,transparent); font-size: .75rem; font-weight: 700; color: color-mix(in srgb,var(--ink) 40%,transparent); cursor: pointer; font-family: inherit; transition: all .15s; }
   .size-btn.active { background: var(--ink); color: white; border-color: var(--ink); }

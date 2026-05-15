@@ -4,6 +4,8 @@
       urls?: string[]
       mode?: "single" | "grid" | "carousel"
       radius?: number
+      width?: "full" | "3/4" | "1/2" | "1/4"
+      align?: "left" | "center" | "right"
     }
   }
 
@@ -11,7 +13,11 @@
 
   const urls = $derived(data.urls ?? [])
   const mode = $derived(data.mode ?? (urls.length > 1 ? "grid" : "single"))
-  const radius = $derived(data.radius ?? 12)
+
+  const widthMap = { "full": "100%", "3/4": "75%", "1/2": "50%", "1/4": "25%" }
+  const w = $derived(widthMap[data.width ?? "full"])
+  const align = $derived(data.align ?? "center")
+  const justifyMap = { left: "flex-start", center: "center", right: "flex-end" }
 
   let activeIndex = $state(0)
 
@@ -19,29 +25,31 @@
   function prev() { activeIndex = (activeIndex - 1 + urls.length) % urls.length }
 </script>
 
-<div class="image-block" style="--radius: {radius}px">
-  {#if urls.length === 0}
-    <div class="placeholder">🖼 尚未上傳圖片</div>
-  {:else if mode === "single" || (mode === "carousel" && urls.length === 1)}
-    <img src={urls[0]} alt="img" class="single-img" />
-  {:else if mode === "grid"}
-    <div class="grid" style="--cols: {urls.length === 2 ? 2 : 3}">
-      {#each urls as url}
-        <img src={url} alt="img" />
-      {/each}
-    </div>
-  {:else if mode === "carousel"}
-    <div class="carousel">
-      <img src={urls[activeIndex]} alt="img" />
-      <button class="nav prev" onclick={prev}>‹</button>
-      <button class="nav next" onclick={next}>›</button>
-      <div class="dots">
-        {#each urls as _, i}
-          <div class="dot" class:active={activeIndex === i}></div>
+<div class="image-block" style="display:flex; justify-content:{justifyMap[align]}">
+  <div style="width:{w}; --radius: {data.radius ?? 0}px">
+    {#if urls.length === 0}
+      <div class="placeholder">🖼 尚未上傳圖片</div>
+    {:else if mode === "single" || (mode === "carousel" && urls.length === 1)}
+      <img src={urls[0]} alt="img" class="single-img" />
+    {:else if mode === "grid"}
+      <div class="grid" style="--cols: {urls.length === 2 ? 2 : 3}">
+        {#each urls as url}
+          <img src={url} alt="img" />
         {/each}
       </div>
-    </div>
-  {/if}
+    {:else if mode === "carousel"}
+      <div class="carousel">
+        <img src={urls[activeIndex]} alt="img" />
+        <button class="nav prev" onclick={prev}>‹</button>
+        <button class="nav next" onclick={next}>›</button>
+        <div class="dots">
+          {#each urls as _, i}
+            <div class="dot" class:active={activeIndex === i}></div>
+          {/each}
+        </div>
+      </div>
+    {/if}
+  </div>
 </div>
 
 <style>

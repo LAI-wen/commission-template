@@ -13,7 +13,7 @@
 
 <div 
   class="divider-block" 
-  style="--spacing: {data.spacing ?? 16}px; --thickness: {data.thickness ?? 1}px; --style: {data.style ?? 'solid'}; --color: {data.color ?? 'rgba(0,0,0,0.1)'}"
+  style="--spacing: {data.spacing ?? 16}px; --thickness: {data.thickness ?? 1}px; --style: {data.style ?? 'solid'}; --color: {data.color ?? 'var(--color-border-secondary)'}"
 >
   <hr class="line" />
 </div>

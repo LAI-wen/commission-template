@@ -79,7 +79,7 @@
   <div class="page-bg" aria-hidden="true" style={pageBgStyle}></div>
   {#if hasConfig && editorBlocks.length > 0}
     <div class="card-wrap" style={cardWrapStyle}>
-      <CardPreview blocks={editorBlocks} overrides={editorOverrides} globalDesign={editorGlobal} types={data.types ?? []} />
+      <CardPreview blocks={editorBlocks} overrides={editorOverrides} globalDesign={editorGlobal} types={data.types ?? []} queueData={data.queueData} />
     </div>
   {:else}
     <div class="empty-state">
