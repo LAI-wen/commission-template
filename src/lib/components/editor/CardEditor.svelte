@@ -349,8 +349,9 @@
             </div>
 
           {:else if block.type === 'profile_name'}
-            <div class="text-center">
-              <h1 class="profile-name" style="color:{s.textColor};">{block.data.name}</h1>
+            {@const nameSize = block.data.size === 'sm' ? '1.125rem' : block.data.size === 'base' ? '1.5rem' : block.data.size === 'xl' ? '2.5rem' : '1.875rem'}
+            <div style="text-align:{block.data.align ?? 'center'};">
+              <h1 class="profile-name" style="color:{s.textColor};font-size:{nameSize};">{block.data.name}</h1>
             </div>
 
           {:else if block.type === 'section'}
@@ -363,8 +364,10 @@
             </div>
 
           {:else if block.type === 'image'}
-            <div style="overflow:hidden;border-radius:{s.radius};">
-              <img src={block.data.src} alt={block.data.alt ?? ''} style="width:100%;height:auto;object-fit:cover;display:block;" />
+            {@const imgW = block.data.width === 'small' ? '40%' : block.data.width === 'medium' ? '70%' : '100%'}
+            {@const imgJ = block.data.align === 'left' ? 'flex-start' : block.data.align === 'right' ? 'flex-end' : 'center'}
+            <div style="display:flex;justify-content:{imgJ};overflow:hidden;border-radius:{s.radius};">
+              <img src={block.data.src} alt={block.data.alt ?? ''} style="width:{imgW};height:auto;object-fit:cover;display:block;border-radius:{s.radius};" />
             </div>
 
           {:else if block.type === 'gallery'}
@@ -419,7 +422,7 @@
             </div>
 
           {:else if block.type === 'text'}
-            <div class="text-block" style={bg}>
+            <div class="text-block" style="{bg}text-align:{block.data.align ?? 'left'};">
               <p style="font-size:{block.data.size==='sm'?'.75rem':block.data.size==='lg'?'1.125rem':block.data.size==='xl'?'1.25rem':'.875rem'};">{block.data.content ?? '在此輸入文字...'}</p>
             </div>
 
@@ -526,6 +529,19 @@
           <div class="field-group">
             <div class="p-label">顯示名稱</div>
             <input class="p-input" value={selBlock.data.name} oninput={(e) => upd(selBlock.id,'name',(e.target as HTMLInputElement).value)} />
+            <div class="p-label" style="margin-top:.5rem;">字體大小</div>
+            <div class="btn-row">
+              <button class="size-btn" class:active={selBlock.data.size==='sm'}   onclick={() => upd(selBlock.id,'size','sm')}>小</button>
+              <button class="size-btn" class:active={selBlock.data.size==='base'} onclick={() => upd(selBlock.id,'size','base')}>中</button>
+              <button class="size-btn" class:active={!selBlock.data.size||selBlock.data.size==='lg'} onclick={() => upd(selBlock.id,'size','lg')}>大</button>
+              <button class="size-btn" class:active={selBlock.data.size==='xl'}   onclick={() => upd(selBlock.id,'size','xl')}>特大</button>
+            </div>
+            <div class="p-label" style="margin-top:.5rem;">對齊</div>
+            <div class="btn-row">
+              <button class="size-btn align-btn" class:active={selBlock.data.align==='left'}   onclick={() => upd(selBlock.id,'align','left')}>左</button>
+              <button class="size-btn align-btn" class:active={!selBlock.data.align||selBlock.data.align==='center'} onclick={() => upd(selBlock.id,'align','center')}>中</button>
+              <button class="size-btn align-btn" class:active={selBlock.data.align==='right'}  onclick={() => upd(selBlock.id,'align','right')}>右</button>
+            </div>
           </div>
 
         {:else if selBlock.type === 'section'}
@@ -544,6 +560,18 @@
             </label>
             <div class="p-label" style="margin-top:.4rem;">或貼上 URL</div>
             <input class="p-input" value={selBlock.data.src} onchange={(e) => upd(selBlock.id,'src',(e.target as HTMLInputElement).value)} />
+            <div class="p-label" style="margin-top:.5rem;">圖片寬度</div>
+            <div class="btn-row">
+              <button class="size-btn" class:active={selBlock.data.width==='small'}  onclick={() => upd(selBlock.id,'width','small')}>小</button>
+              <button class="size-btn" class:active={selBlock.data.width==='medium'} onclick={() => upd(selBlock.id,'width','medium')}>中</button>
+              <button class="size-btn" class:active={!selBlock.data.width||selBlock.data.width==='full'} onclick={() => upd(selBlock.id,'width','full')}>全寬</button>
+            </div>
+            <div class="p-label" style="margin-top:.5rem;">對齊</div>
+            <div class="btn-row">
+              <button class="size-btn align-btn" class:active={selBlock.data.align==='left'}   onclick={() => upd(selBlock.id,'align','left')}>左</button>
+              <button class="size-btn align-btn" class:active={!selBlock.data.align||selBlock.data.align==='center'} onclick={() => upd(selBlock.id,'align','center')}>中</button>
+              <button class="size-btn align-btn" class:active={selBlock.data.align==='right'}  onclick={() => upd(selBlock.id,'align','right')}>右</button>
+            </div>
           </div>
 
         {:else if selBlock.type === 'text'}
@@ -556,6 +584,12 @@
               <button class="size-btn" class:active={selBlock.data.size==='base'} onclick={() => upd(selBlock.id,'size','base')}>中</button>
               <button class="size-btn" class:active={selBlock.data.size==='lg'}   onclick={() => upd(selBlock.id,'size','lg')}>大</button>
               <button class="size-btn" class:active={!selBlock.data.size||selBlock.data.size==='xl'} onclick={() => upd(selBlock.id,'size','xl')}>特大</button>
+            </div>
+            <div class="p-label" style="margin-top:.5rem;">對齊</div>
+            <div class="btn-row">
+              <button class="size-btn align-btn" class:active={!selBlock.data.align||selBlock.data.align==='left'}   onclick={() => upd(selBlock.id,'align','left')}>左</button>
+              <button class="size-btn align-btn" class:active={selBlock.data.align==='center'} onclick={() => upd(selBlock.id,'align','center')}>中</button>
+              <button class="size-btn align-btn" class:active={selBlock.data.align==='right'}  onclick={() => upd(selBlock.id,'align','right')}>右</button>
             </div>
           </div>
 
@@ -854,7 +888,7 @@
   .anon-title { display: flex; align-items: center; gap: .5rem; justify-content: center; font-weight: 900; font-size: 1rem; position: relative; z-index: 1; }
   .anon-input-preview { margin-top: 1rem; border-radius: .875rem; padding: .75rem 1rem; font-size: .875rem; opacity: .5; text-align: left; position: relative; z-index: 1; border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.08); }
   .anon-submit { margin-top: .875rem; width: 100%; border-radius: .875rem; padding: .75rem; font-size: .875rem; font-weight: 700; position: relative; z-index: 1; border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.12); color: inherit; cursor: pointer; font-family: inherit; }
-  .text-block { padding: 1.25rem; text-align: center; }
+  .text-block { padding: 1.25rem; }
   .text-block p { margin: 0; line-height: 1.625; }
   .visitor-block { width: 100%; padding: 1.25rem; text-align: center; font-weight: 700; }
   .visitor-label { font-size: .875rem; opacity: .7; margin-bottom: .25rem; }
