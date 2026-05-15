@@ -14,16 +14,51 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 # Check dependencies
-command -v node &>/dev/null || err "找不到 Node.js，請先安裝 Node.js 18+"
+command -v node &>/dev/null || err "找不到 Node.js，請先安裝 Node.js 22+"
 command -v npm  &>/dev/null || err "找不到 npm"
+
+# Ensure Node.js >= 22 (wrangler 4.x requirement)
+NODE_MAJOR=$(node -e "process.stdout.write(String(process.versions.node.split('.')[0]))")
+if [[ "$NODE_MAJOR" -lt 22 ]]; then
+  warn "Node.js 版本過舊（目前 v$(node -v | tr -d v)），需要 22+，嘗試用 nvm 升級..."
+  NVM_SH=""
+  for p in "$HOME/.nvm/nvm.sh" "/usr/local/share/nvm/nvm.sh" "${NVM_DIR:-}/nvm.sh"; do
+    [ -s "$p" ] && NVM_SH="$p" && break
+  done
+
+  if [ -n "$NVM_SH" ]; then
+    # shellcheck source=/dev/null
+    source "$NVM_SH"
+    nvm install 22 --no-progress
+    nvm use 22
+    ok "已切換到 Node.js $(node -v)"
+  else
+    # fallback: install via NodeSource
+    info "nvm 不可用，改用 NodeSource 安裝 Node.js 22..."
+    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - &>/dev/null
+    sudo apt-get install -y nodejs &>/dev/null
+    ok "已安裝 Node.js $(node -v)"
+  fi
+fi
 
 # Check / prompt Cloudflare login
 info "檢查 Cloudflare 登入狀態..."
-if ! npx --yes wrangler whoami &>/dev/null; then
-  warn "尚未登入，開啟瀏覽器授權..."
-  npx wrangler login
+if [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+  ok "使用 CLOUDFLARE_API_TOKEN"
+elif npx --yes wrangler whoami &>/dev/null 2>&1; then
+  ok "已登入 Cloudflare（OAuth）"
+else
+  echo ""
+  warn "找不到 Cloudflare 登入憑證。"
+  echo "  在 Codespaces 請使用 API Token："
+  echo "  1. 到 https://dash.cloudflare.com/profile/api-tokens 建立 Token（Edit Cloudflare Workers 模板）"
+  echo "  2. GitHub Settings → Codespaces → New secret，名稱 CLOUDFLARE_API_TOKEN，貼上 token"
+  echo "  3. 重新開啟 Codespace 後再執行此腳本"
+  echo ""
+  echo "  本機用戶執行：npx wrangler login"
+  echo ""
+  err "未登入 Cloudflare，請參考以上說明"
 fi
-ok "已登入 Cloudflare"
 
 echo ""
 
@@ -46,41 +81,38 @@ PAGES_URL="https://${PROJECT_NAME}.pages.dev"
 
 echo ""
 
+UUID_RE='[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}'
+
 # ── 1. 建立 D1 ────────────────────────────────────────
 info "建立 D1 資料庫：${DB_NAME}..."
-if D1_OUT=$(npx wrangler d1 create "$DB_NAME" 2>&1); then
-  DATABASE_ID=$(echo "$D1_OUT" | grep -oE '"database_id":\s*"[a-f0-9-]+"' | grep -oE '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}')
-else
+D1_OUT=$(npx wrangler d1 create "$DB_NAME" 2>&1) || true
+DATABASE_ID=$(echo "$D1_OUT" | grep -oE "$UUID_RE" | head -1 || true)
+
+if [[ -z "$DATABASE_ID" ]]; then
   warn "D1 建立失敗（可能已存在），嘗試取得現有 ID..."
   DATABASE_ID=$(npx wrangler d1 list 2>&1 \
-    | grep "$DB_NAME" \
-    | grep -oE '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}' \
-    | head -1)
+    | grep -E "$DB_NAME" \
+    | grep -oE "$UUID_RE" \
+    | head -1 || true)
 fi
-[[ -z "$DATABASE_ID" ]] && \
-  err "無法取得 D1 database_id，請手動建立後重試"
+[[ -z "$DATABASE_ID" ]] && err "無法取得 D1 database_id，請手動建立後重試"
 ok "D1 database_id: ${DATABASE_ID}"
 
 # ── 2. 建立 KV ────────────────────────────────────────
 info "建立 KV Namespace：${KV_NAME}..."
-if KV_OUT=$(npx wrangler kv namespace create "$KV_NAME" 2>&1); then
-  KV_ID=$(echo "$KV_OUT" \
-    | grep -oE '"id":\s*"[a-f0-9]+"' \
-    | head -1 \
-    | grep -oE '"[a-f0-9]+"' \
-    | tail -1 \
-    | tr -d '"')
-else
+KV_OUT=$(npx wrangler kv namespace create "$KV_NAME" 2>&1) || true
+KV_ID=$(echo "$KV_OUT" | grep -oE '"id":\s*"[a-f0-9]+"' | grep -oE '"[a-f0-9]+"' | tail -1 | tr -d '"' || true)
+
+if [[ -z "$KV_ID" ]]; then
   warn "KV 建立失敗（可能已存在），嘗試取得現有 ID..."
   KV_ID=$(npx wrangler kv namespace list 2>&1 \
-    | grep -A2 "\"$KV_NAME\"" \
+    | grep -A5 "\"$KV_NAME\"" \
     | grep -oE '"id":\s*"[a-f0-9]+"' \
     | grep -oE '"[a-f0-9]+"' \
     | tail -1 \
-    | tr -d '"')
+    | tr -d '"' || true)
 fi
-[[ -z "$KV_ID" ]] && \
-  err "無法取得 KV namespace_id，請手動建立後重試"
+[[ -z "$KV_ID" ]] && err "無法取得 KV namespace_id，請手動建立後重試"
 ok "KV namespace_id: ${KV_ID}"
 
 # ── 3. 生成 wrangler.toml ────────────────────────────
