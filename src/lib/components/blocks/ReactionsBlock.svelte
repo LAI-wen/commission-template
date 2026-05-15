@@ -3,10 +3,9 @@
     data: {
       emojis?: string[]
     }
-    accentColor?: string
   }
 
-  let { data, accentColor = "#000" }: Props = $props()
+  let { data }: Props = $props()
 
   const emojis = $derived(data.emojis ?? ["❤️", "🌟", "🎨", "🍵"])
   let reactionCounts = $state<Record<string, number>>({})

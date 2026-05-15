@@ -19,27 +19,10 @@
   }
 
   const serverConfig = parseServerConfig()
-  let editorBlocks = $state<any[]>(serverConfig?.blocks ?? [])
-  let editorOverrides = $state<Record<string, any>>(serverConfig?.overrides ?? {})
-  let editorGlobal = $state<GlobalDesign>({ ...DEFAULT_GLOBAL, ...(serverConfig?.globalDesign ?? {}) })
-  let hasConfig = $state(!!serverConfig)
-
-  $effect(() => {
-    try {
-      const lb = localStorage.getItem("card_blocks")
-      const lo = localStorage.getItem("card_overrides")
-      const lg = localStorage.getItem("card_global")
-      if (lb) {
-        const blocks = JSON.parse(lb)
-        if (Array.isArray(blocks) && blocks.length > 0) {
-          editorBlocks = blocks
-          editorOverrides = lo ? JSON.parse(lo) : {}
-          if (lg) editorGlobal = { ...DEFAULT_GLOBAL, ...JSON.parse(lg) }
-          hasConfig = true
-        }
-      }
-    } catch {}
-  })
+  const editorBlocks   = serverConfig?.blocks ?? []
+  const editorOverrides = serverConfig?.overrides ?? {}
+  const editorGlobal   = { ...DEFAULT_GLOBAL, ...(serverConfig?.globalDesign ?? {}) } as GlobalDesign
+  const hasConfig = !!serverConfig
 
   const pageBgStyle = $derived(
     [

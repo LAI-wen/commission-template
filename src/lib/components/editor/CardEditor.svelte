@@ -15,8 +15,9 @@
     creator?: { display_name?: any; avatar_url?: string | null; [k: string]: any } | null
     types?: CommissionType[]
     queueData?: { current: number; max: number }
+    initialConfig?: { blocks: Block[]; overrides: Record<string, StyleMap>; globalDesign?: GlobalDesign } | null
   }
-  let { creator = null, types = [], queueData }: Props = $props()
+  let { creator = null, types = [], queueData, initialConfig = null }: Props = $props()
 
   function renderMd(text: string): string {
     return marked.parse(text ?? '', { async: false }) as string
@@ -75,12 +76,20 @@
   // ── 初始化 / 倒計時 ──
   $effect(() => {
     try {
-      const sb = localStorage.getItem('card_blocks')
-      const so = localStorage.getItem('card_overrides')
-      const sg = localStorage.getItem('card_global')
-      if (sb) blocks = JSON.parse(sb)
-      if (so) overrides = JSON.parse(so)
-      if (sg) globalDesign = { ...DEFAULT_GLOBAL, ...JSON.parse(sg) }
+      if (initialConfig) {
+        // DB 有資料：優先載入 DB 設定
+        if (initialConfig.blocks?.length) blocks = initialConfig.blocks
+        overrides = initialConfig.overrides ?? {}
+        if (initialConfig.globalDesign) globalDesign = { ...DEFAULT_GLOBAL, ...initialConfig.globalDesign }
+      } else {
+        // 無 DB 資料：退回 localStorage 草稿
+        const sb = localStorage.getItem('card_blocks')
+        const so = localStorage.getItem('card_overrides')
+        const sg = localStorage.getItem('card_global')
+        if (sb) blocks = JSON.parse(sb)
+        if (so) overrides = JSON.parse(so)
+        if (sg) globalDesign = { ...DEFAULT_GLOBAL, ...JSON.parse(sg) }
+      }
     } catch {}
     const iv = setInterval(() => cdTick++, 1000)
     return () => clearInterval(iv)
@@ -592,17 +601,26 @@
             </label>
             <div class="p-label" style="margin-top:.4rem;">或貼上 URL</div>
             <input class="p-input" value={selBlock.data.src} onchange={(e) => upd(selBlock.id,'src',(e.target as HTMLInputElement).value)} />
-            <div class="p-label" style="margin-top:.5rem;">圖片寬度</div>
+            <div class="p-label" style="margin-top:.5rem;">寬度</div>
             <div class="btn-row">
-              <button class="size-btn" class:active={selBlock.data.width==='small'}  onclick={() => upd(selBlock.id,'width','small')}>小</button>
-              <button class="size-btn" class:active={selBlock.data.width==='medium'} onclick={() => upd(selBlock.id,'width','medium')}>中</button>
               <button class="size-btn" class:active={!selBlock.data.width||selBlock.data.width==='full'} onclick={() => upd(selBlock.id,'width','full')}>全寬</button>
+              <button class="size-btn" class:active={selBlock.data.width==='3/4'} onclick={() => upd(selBlock.id,'width','3/4')}>3/4</button>
+              <button class="size-btn" class:active={selBlock.data.width==='1/2'} onclick={() => upd(selBlock.id,'width','1/2')}>1/2</button>
+              <button class="size-btn" class:active={selBlock.data.width==='1/4'} onclick={() => upd(selBlock.id,'width','1/4')}>1/4</button>
             </div>
             <div class="p-label" style="margin-top:.5rem;">對齊</div>
             <div class="btn-row">
-              <button class="size-btn align-btn" class:active={selBlock.data.align==='left'}   onclick={() => upd(selBlock.id,'align','left')}>左</button>
-              <button class="size-btn align-btn" class:active={!selBlock.data.align||selBlock.data.align==='center'} onclick={() => upd(selBlock.id,'align','center')}>中</button>
-              <button class="size-btn align-btn" class:active={selBlock.data.align==='right'}  onclick={() => upd(selBlock.id,'align','right')}>右</button>
+              <button class="size-btn" class:active={!selBlock.data.align||selBlock.data.align==='center'} onclick={() => upd(selBlock.id,'align','center')} disabled={!selBlock.data.width||selBlock.data.width==='full'}>中</button>
+              <button class="size-btn" class:active={selBlock.data.align==='left'}  onclick={() => upd(selBlock.id,'align','left')}  disabled={!selBlock.data.width||selBlock.data.width==='full'}>左</button>
+              <button class="size-btn" class:active={selBlock.data.align==='right'} onclick={() => upd(selBlock.id,'align','right')} disabled={!selBlock.data.width||selBlock.data.width==='full'}>右</button>
+            </div>
+            <div class="p-label" style="margin-top:.5rem;">圓角</div>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <input type="range" min="0" max="24" step="1"
+                value={selBlock.data.radius ?? 0}
+                oninput={(e) => upd(selBlock.id,'radius',Number((e.target as HTMLInputElement).value))}
+                style="flex:1;" />
+              <span style="font-family:var(--font-mono);font-size:.75rem;min-width:2.5rem;">{selBlock.data.radius ?? 0}px</span>
             </div>
           </div>
 
@@ -1068,12 +1086,12 @@
   .anon-note-list { font-size: .6875rem; line-height: 1.6; list-style: disc; list-style-position: inside; color: color-mix(in srgb,var(--ink) 45%,transparent); margin: 0; padding: 0; }
 
   /* Add panel */
-  .add-overlay { position: fixed; inset: 0; z-index: 55; background: color-mix(in srgb,var(--ink) 20%,transparent); backdrop-filter: blur(4px); pointer-events: auto; }
-  .add-panel { position: fixed; top: 0; bottom: 0; left: 224px; z-index: 65; width: 16rem; display: flex; flex-direction: column; background: white; border-right: 2px solid color-mix(in srgb,var(--ink) 8%,transparent); box-shadow: 8px 0 32px rgba(0,0,0,.15); transform: translateX(-200%); transition: transform .3s cubic-bezier(.25,.46,.45,.94); pointer-events: auto; }
+  .add-overlay { position: fixed; inset: 0; z-index: 1000; background: color-mix(in srgb,var(--ink) 24%,transparent); backdrop-filter: blur(8px); pointer-events: auto; }
+  .add-panel { position: fixed; top: 1rem; right: 1rem; bottom: 1rem; left: auto; z-index: 1001; width: min(24rem, calc(100vw - 2rem)); display: flex; flex-direction: column; background: white; border: 1px solid color-mix(in srgb,var(--ink) 10%,transparent); border-radius: 1.25rem; box-shadow: 0 18px 48px rgba(0,0,0,.18); transform: translateX(110%); transition: transform .3s cubic-bezier(.25,.46,.45,.94); pointer-events: auto; overflow: hidden; }
   .add-panel.add-open { transform: translateX(0); }
 
   @media (max-width: 900px) {
-    .add-panel { left: 56px; }
+    .add-panel { width: min(22rem, calc(100vw - 1.5rem)); }
   }
 
   @media (max-width: 680px) {
