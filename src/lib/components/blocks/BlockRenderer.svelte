@@ -20,6 +20,7 @@
   import TermsBlock from "./TermsBlock.svelte"
   import ImageBlock from "./ImageBlock.svelte"
   import AnonymousBoxBlock from "./AnonymousBoxBlock.svelte"
+  import ColumnsBlock from "./ColumnsBlock.svelte"
   
   // Bento Blocks
   import BentoBio from "./BentoBio.svelte"
@@ -129,6 +130,8 @@
   <ImageBlock data={block.data} />
 {:else if block.type === "anonymous_box"}
   <AnonymousBoxBlock data={block.data} {accentColor} {lang} />
+{:else if block.type === "columns"}
+  <ColumnsBlock data={block.data} {creator} {works} {isOpen} {styles} {accentColor} {types} {lang} />
 {:else}
   <div class="unsupported">Unsupported Block: {block.type}</div>
 {/if}

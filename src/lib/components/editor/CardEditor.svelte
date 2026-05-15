@@ -68,10 +68,17 @@
   let cdTick      = $state(0)
   let toasts      = $state<{ id: number; msg: string }[]>([])
   let toastN      = $state(0)
-  let dragSrcId   = $state<string | null>(null)
-  let device      = $state<'mobile' | 'desktop'>('desktop')
+  let dragSrcId    = $state<string | null>(null)
+  let device       = $state<'mobile' | 'desktop'>('desktop')
+  let selectedInner = $state<{ colIndex: number; blockId: string } | null>(null)
+  let addingToCol   = $state<number | null>(null)
 
   let selBlock = $derived(blocks.find(b => b.id === selectedId) ?? null)
+  const selInnerBlock = $derived(
+    selectedInner && selBlock?.type === 'columns'
+      ? ((selBlock.data.cols ?? []) as any[][])[selectedInner.colIndex]?.find((b: any) => b.id === selectedInner!.blockId) ?? null
+      : null
+  )
 
   // ── 初始化 / 倒計時 ──
   $effect(() => {
@@ -122,8 +129,8 @@
   }
 
   // ── 選取 ──
-  function sel(id: string) { selectedId = id }
-  function closePanel() { selectedId = null }
+  function sel(id: string) { selectedId = id; selectedInner = null }
+  function closePanel() { selectedId = null; selectedInner = null; addingToCol = null }
 
   // ── 刪除 ──
   function delBlock() {
@@ -149,11 +156,27 @@
     text:         { content:'在此輸入文字內容...', size:'base' },
     commission:   {},
     queue:        { label:'目前排單', max:10, current:3 },
+    notice:       { content:'這是一則重要公告', type:'info', closeable:true },
+    social:       { links:[{ platform:'Twitter', url:'#', label:'Twitter' }] },
+    faq:          { items:[{ q:'常見問題？', a:'答案內容...' }] },
+    terms:        { title:'委託條款', content:'條款內容...' },
+    pricing:      { plans:[{ name:'基本方案', price:'NT$ 500 起', features:['線稿', '2次修改'], recommended:false }] },
+    reactions:    { emojis:['❤️','🌟','🎨','🍵'] },
+    divider:      { style:'solid', thickness:1, spacing:16 },
+    spacer:       { height:32 },
+    columns:      { numCols:2, widths:[50,50], cols:[[],[]] },
   }
   function addBlock(type: string) {
     const id = 'el_' + Date.now()
+    if (addingToCol !== null) {
+      addInnerBlock(addingToCol, type)
+      addingToCol = null
+      addOpen = false
+      return
+    }
     blocks = [...blocks, { id, type, data: { ...(DEFS[type] ?? {}) } }]
     selectedId = id
+    selectedInner = null
     addOpen = false
     toast(`已新增「${LABELS[type] ?? type}」`)
   }
@@ -201,6 +224,70 @@
   function dend() {
     dragSrcId = null
     document.querySelectorAll('.dragging,.drag-over').forEach(el => el.classList.remove('dragging','drag-over'))
+  }
+
+  // ── 巢狀欄位管理 ──
+  function updInner(key: string, value: any) {
+    if (!selectedId || !selectedInner) return
+    const idx = blocks.findIndex(b => b.id === selectedId)
+    if (idx < 0) return
+    const cols: any[][] = JSON.parse(JSON.stringify(blocks[idx].data.cols ?? []))
+    const ci = selectedInner.colIndex
+    const bi = (cols[ci] ?? []).findIndex((b: any) => b.id === selectedInner!.blockId)
+    if (bi < 0) return
+    cols[ci][bi] = { ...cols[ci][bi], data: { ...cols[ci][bi].data, [key]: value } }
+    blocks[idx] = { ...blocks[idx], data: { ...blocks[idx].data, cols } }
+    blocks = [...blocks]
+  }
+
+  function addInnerBlock(colIdx: number, type: string) {
+    if (!selectedId) return
+    const idx = blocks.findIndex(b => b.id === selectedId)
+    if (idx < 0) return
+    const cols: any[][] = JSON.parse(JSON.stringify(
+      blocks[idx].data.cols ?? Array.from({ length: blocks[idx].data.numCols ?? 2 }, () => [])
+    ))
+    const newBlock = { id: 'inner_' + Date.now(), type, data: { ...(DEFS[type] ?? {}) } }
+    if (!cols[colIdx]) cols[colIdx] = []
+    cols[colIdx] = [...cols[colIdx], newBlock]
+    blocks[idx] = { ...blocks[idx], data: { ...blocks[idx].data, cols } }
+    blocks = [...blocks]
+    selectedInner = { colIndex: colIdx, blockId: newBlock.id }
+    toast(`已新增「${LABELS[type] ?? type}」到欄 ${colIdx + 1}`)
+  }
+
+  function delInnerBlock() {
+    if (!selectedId || !selectedInner) return
+    const idx = blocks.findIndex(b => b.id === selectedId)
+    if (idx < 0) return
+    const cols: any[][] = JSON.parse(JSON.stringify(blocks[idx].data.cols ?? []))
+    const ci = selectedInner.colIndex
+    cols[ci] = (cols[ci] ?? []).filter((b: any) => b.id !== selectedInner!.blockId)
+    blocks[idx] = { ...blocks[idx], data: { ...blocks[idx].data, cols } }
+    blocks = [...blocks]
+    selectedInner = null
+  }
+
+  function updateColsCount(n: number) {
+    if (!selectedId) return
+    const idx = blocks.findIndex(b => b.id === selectedId)
+    if (idx < 0) return
+    const oldCols = (blocks[idx].data.cols ?? []) as any[][]
+    const newCols = Array.from({ length: n }, (_: any, i: number) => oldCols[i] ?? [])
+    const newWidths = Array.from({ length: n }, () => Math.round(100 / n))
+    blocks[idx] = { ...blocks[idx], data: { ...blocks[idx].data, numCols: n, cols: newCols, widths: newWidths } }
+    blocks = [...blocks]
+    selectedInner = null
+  }
+
+  function updateColWidth(colIdx: number, val: number) {
+    if (!selectedId) return
+    const idx = blocks.findIndex(b => b.id === selectedId)
+    if (idx < 0) return
+    const widths: number[] = [...(blocks[idx].data.widths ?? [])]
+    widths[colIdx] = val
+    blocks[idx] = { ...blocks[idx], data: { ...blocks[idx].data, widths } }
+    blocks = [...blocks]
   }
 
   // ── 圖片上傳 ──
@@ -305,7 +392,7 @@
   function clickOut(e: MouseEvent) {
     const t = e.target as Element
     if (!t.closest('.block-wrap') && !t.closest('.attr-panel') && !t.closest('.add-panel') && !t.closest('.gd-panel') && !t.closest('.fab-col')) {
-      if (selectedId) selectedId = null
+      if (selectedId) { selectedId = null; selectedInner = null }
       if (globalOpen) globalOpen = false
     }
   }
@@ -314,12 +401,16 @@
   const LABELS: Record<string,string> = {
     avatar:'頭像', profile_name:'名稱', section:'區段', image:'圖片',
     gallery:'圖庫', tags:'標籤', button:'按鈕', countdown:'倒計時',
-    anon_box:'匿名箱', visitor:'訪客計數', text:'文字', commission:'委託項目', queue:'排單狀態'
+    anon_box:'匿名箱', visitor:'訪客計數', text:'文字', commission:'委託項目', queue:'排單狀態',
+    notice:'公告', social:'社群連結', faq:'FAQ', terms:'委託條款',
+    pricing:'價格方案', reactions:'表情反應', divider:'分隔線', spacer:'空白間距', columns:'佈局'
   }
   const ICONS: Record<string,string> = {
     avatar:'👤', profile_name:'名', section:'#', image:'🖼', gallery:'⊞',
     tags:'⊙', button:'→', countdown:'⏱', anon_box:'✉', visitor:'👁',
-    text:'T', commission:'📄', queue:'≡'
+    text:'T', commission:'📄', queue:'≡',
+    notice:'📢', social:'🔗', faq:'❓', terms:'📋',
+    pricing:'💰', reactions:'❤️', divider:'─', spacer:'↕', columns:'⊡'
   }
   const GENERAL_TYPES: [string, string, string][] = [
     ['profile_name','名','名稱'], ['text','T','文字'],
@@ -498,6 +589,28 @@
                 <div class="queue-bar-fill" style="width:{(qCur / Math.max(qMax, 1)) * 100}%;"></div>
               </div>
               <div class="queue-remain">剩餘 {Math.max(qMax - qCur, 0)} 個名額</div>
+            </div>
+
+          {:else if block.type === 'columns'}
+            {@const numCols = block.data.numCols ?? 2}
+            {@const widths  = (block.data.widths ?? Array.from({ length: numCols }, () => 100 / numCols)) as number[]}
+            {@const cols    = (block.data.cols   ?? Array.from({ length: numCols }, () => [])) as any[][]}
+            <div class="col-preview" style="grid-template-columns:{widths.map(w=>`${w}fr`).join(' ')}">
+              {#each cols as colBlocks, ci}
+                <div class="col-lane">
+                  {#each colBlocks as ib}
+                    <button
+                      class="inner-chip"
+                      class:inner-selected={selectedInner?.blockId === ib.id && block.id === selectedId}
+                      onclick={(e) => { e.stopPropagation(); sel(block.id); selectedInner = { colIndex: ci, blockId: ib.id } }}
+                    >
+                      <span class="inner-chip-icon">{ICONS[ib.type] ?? '?'}</span>
+                      <span>{LABELS[ib.type] ?? ib.type}</span>
+                    </button>
+                  {/each}
+                  <button class="col-add-inner" onclick={(e) => { e.stopPropagation(); sel(block.id); addingToCol = ci; addOpen = true }}>＋</button>
+                </div>
+              {/each}
             </div>
 
           {:else}
@@ -743,9 +856,207 @@
             <div class="p-label">標籤文字</div>
             <input class="p-input" value={selBlock.data.label ?? '歡迎光臨'} oninput={(e) => upd(selBlock.id,'label',(e.target as HTMLInputElement).value)} />
           </div>
+
+        {:else if selBlock.type === 'notice'}
+          <div class="field-group">
+            <div class="p-label">公告類型</div>
+            <div class="btn-row">
+              {#each [['info','ℹ 提示'],['warn','⚠ 警告'],['error','✕ 錯誤']] as [v,l]}
+                <button class="size-btn" class:active={selBlock.data.type===v} onclick={() => upd(selBlock.id,'type',v)}>{l}</button>
+              {/each}
+            </div>
+            <div class="p-label" style="margin-top:.5rem;">公告內容</div>
+            <textarea class="p-textarea" oninput={(e) => upd(selBlock.id,'content',(e.target as HTMLTextAreaElement).value)}>{selBlock.data.content ?? ''}</textarea>
+            <label class="p-toggle-row">
+              <input type="checkbox" checked={selBlock.data.closeable !== false}
+                onchange={(e) => upd(selBlock.id,'closeable',(e.target as HTMLInputElement).checked)} />
+              <span>允許關閉</span>
+            </label>
+          </div>
+
+        {:else if selBlock.type === 'social'}
+          <div class="field-group">
+            <div class="p-label">社群連結</div>
+            {#each (selBlock.data.links ?? []) as link, i}
+              <div class="link-row">
+                <input class="p-input-sm" style="flex:1" placeholder="平台" value={link.platform}
+                  oninput={(e) => { const l=[...(selBlock.data.links??[])]; l[i]={...l[i],platform:(e.target as HTMLInputElement).value}; upd(selBlock.id,'links',l) }} />
+                <input class="p-input-sm" style="flex:2" placeholder="URL" value={link.url}
+                  oninput={(e) => { const l=[...(selBlock.data.links??[])]; l[i]={...l[i],url:(e.target as HTMLInputElement).value}; upd(selBlock.id,'links',l) }} />
+                <button class="icon-del-btn" onclick={() => { const l=[...(selBlock.data.links??[])]; l.splice(i,1); upd(selBlock.id,'links',l) }}>✕</button>
+              </div>
+            {/each}
+            <button class="add-row-btn" onclick={() => upd(selBlock.id,'links',[...(selBlock.data.links??[]),{platform:'',url:'#',label:''}])}>＋ 新增連結</button>
+          </div>
+
+        {:else if selBlock.type === 'faq'}
+          <div class="field-group">
+            <div class="p-label">FAQ 項目</div>
+            {#each (selBlock.data.items ?? []) as item, i}
+              <div class="faq-edit-item">
+                <div class="faq-item-hdr">
+                  <span class="p-label" style="margin:0;">Q{i+1}</span>
+                  <button class="icon-del-btn" onclick={() => { const arr=[...(selBlock.data.items??[])]; arr.splice(i,1); upd(selBlock.id,'items',arr) }}>✕</button>
+                </div>
+                <input class="p-input" placeholder="問題" value={item.q}
+                  oninput={(e) => { const arr=[...(selBlock.data.items??[])]; arr[i]={...arr[i],q:(e.target as HTMLInputElement).value}; upd(selBlock.id,'items',arr) }} />
+                <textarea class="p-textarea" style="min-height:52px" placeholder="答案"
+                  oninput={(e) => { const arr=[...(selBlock.data.items??[])]; arr[i]={...arr[i],a:(e.target as HTMLTextAreaElement).value}; upd(selBlock.id,'items',arr) }}>{item.a}</textarea>
+              </div>
+            {/each}
+            <button class="add-row-btn" onclick={() => upd(selBlock.id,'items',[...(selBlock.data.items??[]),{q:'',a:''}])}>＋ 新增問題</button>
+          </div>
+
+        {:else if selBlock.type === 'terms'}
+          <div class="field-group">
+            <div class="p-label">標題</div>
+            <input class="p-input" value={selBlock.data.title ?? '委託條款'} oninput={(e) => upd(selBlock.id,'title',(e.target as HTMLInputElement).value)} />
+            <div class="p-label" style="margin-top:.5rem;">條款內容（支援 Markdown）</div>
+            <textarea class="p-textarea" style="min-height:120px" oninput={(e) => upd(selBlock.id,'content',(e.target as HTMLTextAreaElement).value)}>{selBlock.data.content ?? ''}</textarea>
+          </div>
+
+        {:else if selBlock.type === 'pricing'}
+          <div class="field-group">
+            <div class="p-label">價格方案</div>
+            {#each (selBlock.data.plans ?? []) as plan, i}
+              <div class="faq-edit-item">
+                <div class="faq-item-hdr">
+                  <span class="p-label" style="margin:0;">方案 {i+1}</span>
+                  <label class="p-toggle-row" style="margin:0;gap:.35rem;">
+                    <input type="checkbox" checked={plan.recommended}
+                      onchange={(e) => { const p=[...(selBlock.data.plans??[])]; p[i]={...p[i],recommended:(e.target as HTMLInputElement).checked}; upd(selBlock.id,'plans',p) }} />
+                    <span style="font-size:.7rem;">推薦</span>
+                  </label>
+                  <button class="icon-del-btn" onclick={() => { const p=[...(selBlock.data.plans??[])]; p.splice(i,1); upd(selBlock.id,'plans',p) }}>✕</button>
+                </div>
+                <input class="p-input" placeholder="方案名稱" value={plan.name}
+                  oninput={(e) => { const p=[...(selBlock.data.plans??[])]; p[i]={...p[i],name:(e.target as HTMLInputElement).value}; upd(selBlock.id,'plans',p) }} />
+                <input class="p-input" placeholder="價格（如 NT$ 500 起）" value={plan.price}
+                  oninput={(e) => { const p=[...(selBlock.data.plans??[])]; p[i]={...p[i],price:(e.target as HTMLInputElement).value}; upd(selBlock.id,'plans',p) }} />
+                <input class="p-input" placeholder="特點（逗號分隔）" value={(plan.features??[]).join(', ')}
+                  oninput={(e) => { const p=[...(selBlock.data.plans??[])]; p[i]={...p[i],features:(e.target as HTMLInputElement).value.split(',').map((s:string)=>s.trim()).filter(Boolean)}; upd(selBlock.id,'plans',p) }} />
+              </div>
+            {/each}
+            <button class="add-row-btn" onclick={() => upd(selBlock.id,'plans',[...(selBlock.data.plans??[]),{name:'新方案',price:'NT$ 0 起',features:[],recommended:false}])}>＋ 新增方案</button>
+          </div>
+
+        {:else if selBlock.type === 'reactions'}
+          <div class="field-group">
+            <div class="p-label">表情（逗號分隔）</div>
+            <input class="p-input" value={(selBlock.data.emojis ?? []).join(', ')}
+              oninput={(e) => upd(selBlock.id,'emojis',(e.target as HTMLInputElement).value.split(',').map((s:string)=>s.trim()).filter(Boolean))} />
+          </div>
+
+        {:else if selBlock.type === 'divider'}
+          <div class="field-group">
+            <div class="p-label">線條樣式</div>
+            <div class="btn-row">
+              {#each [['solid','實線'],['dashed','虛線'],['dotted','點線']] as [v,l]}
+                <button class="size-btn" class:active={selBlock.data.style===v} onclick={() => upd(selBlock.id,'style',v)}>{l}</button>
+              {/each}
+            </div>
+            <div class="p-label" style="margin-top:.5rem;">粗細</div>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <input type="range" min="1" max="8" step="1" value={selBlock.data.thickness ?? 1}
+                oninput={(e) => upd(selBlock.id,'thickness',Number((e.target as HTMLInputElement).value))} style="flex:1;" />
+              <span style="font-family:var(--font-mono);font-size:.75rem;min-width:2rem;">{selBlock.data.thickness ?? 1}px</span>
+            </div>
+            <div class="p-label" style="margin-top:.3rem;">上下間距</div>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <input type="range" min="0" max="64" step="4" value={selBlock.data.spacing ?? 16}
+                oninput={(e) => upd(selBlock.id,'spacing',Number((e.target as HTMLInputElement).value))} style="flex:1;" />
+              <span style="font-family:var(--font-mono);font-size:.75rem;min-width:2rem;">{selBlock.data.spacing ?? 16}px</span>
+            </div>
+          </div>
+
+        {:else if selBlock.type === 'spacer'}
+          <div class="field-group">
+            <div class="p-label">高度</div>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+              <input type="range" min="8" max="200" step="4" value={selBlock.data.height ?? 32}
+                oninput={(e) => upd(selBlock.id,'height',Number((e.target as HTMLInputElement).value))} style="flex:1;" />
+              <span style="font-family:var(--font-mono);font-size:.75rem;min-width:2.5rem;">{selBlock.data.height ?? 32}px</span>
+            </div>
+          </div>
+
+        {:else if selBlock.type === 'columns'}
+          {#if selInnerBlock}
+            <div class="field-group">
+              <button class="back-btn" onclick={() => selectedInner = null}>← 返回佈局設定</button>
+              <div class="inner-block-hdr">
+                <span class="attr-icon" style="font-size:.85rem;">{ICONS[selInnerBlock.type] ?? '?'}</span>
+                <span class="p-label" style="margin:0;">{LABELS[selInnerBlock.type] ?? selInnerBlock.type}</span>
+                <span style="font-size:.6rem;color:color-mix(in srgb,var(--ink) 30%,transparent);font-family:var(--font-mono);">欄 {selectedInner!.colIndex+1}</span>
+              </div>
+              {#if selInnerBlock.type === 'text'}
+                <textarea class="p-textarea" oninput={(e) => updInner('content',(e.target as HTMLTextAreaElement).value)}>{selInnerBlock.data.content ?? ''}</textarea>
+                <div class="p-label" style="margin-top:.3rem;">大小</div>
+                <div class="btn-row">
+                  {#each [['sm','小'],['base','中'],['lg','大'],['xl','特大']] as [v,l]}
+                    <button class="size-btn" class:active={selInnerBlock.data.size===v} onclick={() => updInner('size',v)}>{l}</button>
+                  {/each}
+                </div>
+                <div class="p-label" style="margin-top:.3rem;">對齊</div>
+                <div class="btn-row">
+                  {#each [['left','左'],['center','中'],['right','右']] as [v,l]}
+                    <button class="size-btn" class:active={(selInnerBlock.data.align??'left')===v} onclick={() => updInner('align',v)}>{l}</button>
+                  {/each}
+                </div>
+              {:else if selInnerBlock.type === 'image'}
+                <div class="p-label">圖片 URL</div>
+                <input class="p-input" value={selInnerBlock.data.urls?.[0] ?? ''} onchange={(e) => updInner('urls',[(e.target as HTMLInputElement).value])} />
+              {:else if selInnerBlock.type === 'divider'}
+                <div class="btn-row">
+                  {#each [['solid','實線'],['dashed','虛線'],['dotted','點線']] as [v,l]}
+                    <button class="size-btn" class:active={(selInnerBlock.data.style??'solid')===v} onclick={() => updInner('style',v)}>{l}</button>
+                  {/each}
+                </div>
+              {:else if selInnerBlock.type === 'section'}
+                <div class="p-label">標題</div>
+                <input class="p-input" value={selInnerBlock.data.title ?? ''} oninput={(e) => updInner('title',(e.target as HTMLInputElement).value)} />
+              {:else if selInnerBlock.type === 'notice'}
+                <div class="p-label">內容</div>
+                <textarea class="p-textarea" oninput={(e) => updInner('content',(e.target as HTMLTextAreaElement).value)}>{selInnerBlock.data.content ?? ''}</textarea>
+              {:else}
+                <div class="md-hint">此元件類型在欄中的設定請直接檢視預覽。</div>
+              {/if}
+              <button class="delete-btn" style="margin-top:.5rem" onclick={delInnerBlock}>刪除此元件</button>
+            </div>
+          {:else}
+            <div class="field-group">
+              <div class="p-label">欄數</div>
+              <div class="btn-row">
+                {#each [2,3,4] as n}
+                  <button class="size-btn" class:active={(selBlock.data.numCols??2)===n} onclick={() => updateColsCount(n)}>{n} 欄</button>
+                {/each}
+              </div>
+              <div class="p-label" style="margin-top:.5rem;">欄寬分配</div>
+              {#each (selBlock.data.widths ?? [50,50]) as w, ci}
+                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem;">
+                  <span style="font-size:.7rem;min-width:2.5rem;color:color-mix(in srgb,var(--ink) 50%,transparent);">欄 {ci+1}</span>
+                  <input type="range" min="10" max="80" value={Math.round(w)}
+                    oninput={(e) => updateColWidth(ci, Number((e.target as HTMLInputElement).value))} style="flex:1;" />
+                  <span style="font-family:var(--font-mono);font-size:.7rem;min-width:2.5rem;">{Math.round(w)}%</span>
+                </div>
+              {/each}
+              <div class="p-label" style="margin-top:.5rem;">欄中的元件</div>
+              {#each (selBlock.data.cols ?? [[],[]]) as colBlocks, ci}
+                <div class="col-blocks-list">
+                  <span class="col-idx-label">欄 {ci+1}</span>
+                  {#each (colBlocks as any[]) as ib}
+                    <button class="inner-chip-sm" onclick={() => selectedInner = { colIndex: ci, blockId: ib.id }}>
+                      {ICONS[ib.type] ?? '?'} {LABELS[ib.type] ?? ib.type}
+                    </button>
+                  {/each}
+                  <button class="col-add-sm" onclick={() => { addingToCol = ci; addOpen = true }}>＋</button>
+                </div>
+              {/each}
+            </div>
+          {/if}
         {/if}
 
-        <!-- 樣式 toggle -->
+        <!-- 樣式 toggle (隱藏於巢狀元件編輯中) -->
+        {#if !selInnerBlock}
         <div class="style-toggle-row">
           <span class="style-toggle-label">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
@@ -840,10 +1151,15 @@
             </div>
           </div>
         {/if}
+        {/if}
       </div>
 
       <div class="attr-footer">
-        <button class="delete-btn" onclick={delBlock}>刪除此元件</button>
+        {#if selInnerBlock}
+          <button class="delete-btn" onclick={delInnerBlock}>刪除欄中此元件</button>
+        {:else}
+          <button class="delete-btn" onclick={delBlock}>刪除此元件</button>
+        {/if}
       </div>
     </div>
   </div>
@@ -867,8 +1183,8 @@
 {/if}
 <div class="add-panel" class:add-open={addOpen} aria-hidden={!addOpen}>
   <div class="add-panel-hdr">
-    <span>新增元件</span>
-    <button class="close-btn" onclick={() => addOpen = false} aria-label="關閉">✕</button>
+    <span>{addingToCol !== null ? `新增至欄 ${addingToCol + 1}` : '新增元件'}</span>
+    <button class="close-btn" onclick={() => { addOpen = false; addingToCol = null }} aria-label="關閉">✕</button>
   </div>
   <div class="add-panel-body">
     <div class="add-section-label">一般</div>
@@ -889,6 +1205,46 @@
       <button class="add-block-btn-wide" onclick={() => addBlock('queue')}>
         <div class="add-icon-wide" style="background:color-mix(in srgb,var(--blue) 15%,transparent);color:var(--blue);">≡</div>
         <div><div class="add-wide-title">排單狀態</div><div class="add-wide-sub">顯示排單進度條</div></div>
+      </button>
+    </div>
+
+    <div class="add-section-label" style="margin-top:1rem;">佈局</div>
+    <div class="add-wide-col">
+      <button class="add-block-btn-wide" onclick={() => addBlock('columns')}>
+        <div class="add-icon-wide">⊡</div>
+        <div><div class="add-wide-title">欄位佈局</div><div class="add-wide-sub">並排多欄，支援巢狀元件</div></div>
+      </button>
+    </div>
+
+    <div class="add-section-label" style="margin-top:1rem;">裝飾</div>
+    <div class="add-grid">
+      <button class="add-block-btn" onclick={() => addBlock('divider')}>
+        <div class="add-icon">─</div><span>分隔線</span>
+      </button>
+      <button class="add-block-btn" onclick={() => addBlock('spacer')}>
+        <div class="add-icon">↕</div><span>空白間距</span>
+      </button>
+    </div>
+
+    <div class="add-section-label" style="margin-top:1rem;">內容</div>
+    <div class="add-grid">
+      <button class="add-block-btn" onclick={() => addBlock('notice')}>
+        <div class="add-icon">📢</div><span>公告</span>
+      </button>
+      <button class="add-block-btn" onclick={() => addBlock('social')}>
+        <div class="add-icon">🔗</div><span>社群連結</span>
+      </button>
+      <button class="add-block-btn" onclick={() => addBlock('faq')}>
+        <div class="add-icon">❓</div><span>FAQ</span>
+      </button>
+      <button class="add-block-btn" onclick={() => addBlock('terms')}>
+        <div class="add-icon">📋</div><span>委託條款</span>
+      </button>
+      <button class="add-block-btn" onclick={() => addBlock('pricing')}>
+        <div class="add-icon">💰</div><span>價格方案</span>
+      </button>
+      <button class="add-block-btn" onclick={() => addBlock('reactions')}>
+        <div class="add-icon">❤️</div><span>表情反應</span>
       </button>
     </div>
   </div>
@@ -1134,4 +1490,37 @@
   .add-panel-body::-webkit-scrollbar { width: 4px; }
   .attr-body::-webkit-scrollbar-thumb,
   .add-panel-body::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 99px; }
+
+  /* Columns block preview */
+  .col-preview { display: grid; gap: .5rem; min-height: 3rem; padding: .5rem; }
+  .col-lane { display: flex; flex-direction: column; gap: .4rem; padding: .5rem; background: color-mix(in srgb,var(--ink) 4%,transparent); border: 1.5px dashed color-mix(in srgb,var(--ink) 15%,transparent); border-radius: .75rem; min-height: 2.5rem; }
+  .inner-chip { display: flex; align-items: center; gap: .35rem; padding: .3rem .5rem; background: white; border: 1px solid color-mix(in srgb,var(--ink) 12%,transparent); border-radius: .5rem; font-size: .7rem; font-weight: 600; color: color-mix(in srgb,var(--ink) 60%,transparent); cursor: pointer; font-family: inherit; transition: all .12s; text-align: left; }
+  .inner-chip:hover { border-color: var(--blue); color: var(--blue); }
+  .inner-chip.inner-selected { border-color: var(--blue); background: color-mix(in srgb,var(--blue) 10%,transparent); color: var(--blue); }
+  .inner-chip-icon { font-size: .8rem; }
+  .col-add-inner { padding: .25rem; border: 1.5px dashed color-mix(in srgb,var(--ink) 20%,transparent); border-radius: .5rem; font-size: .85rem; color: color-mix(in srgb,var(--ink) 35%,transparent); background: transparent; cursor: pointer; width: 100%; transition: all .12s; }
+  .col-add-inner:hover { border-color: var(--blue); color: var(--blue); }
+
+  /* Panel controls - new blocks */
+  .link-row { display: flex; align-items: center; gap: .35rem; }
+  .icon-del-btn { width: 1.5rem; height: 1.5rem; border-radius: .375rem; border: 1px solid color-mix(in srgb,var(--ink) 10%,transparent); background: transparent; color: color-mix(in srgb,var(--ink) 35%,transparent); font-size: .65rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .12s; }
+  .icon-del-btn:hover { background: rgba(200,50,50,.08); color: rgba(200,50,50,.8); border-color: rgba(200,50,50,.2); }
+  .add-row-btn { width: 100%; padding: .35rem .7rem; border: 1.5px dashed color-mix(in srgb,var(--ink) 15%,transparent); border-radius: .75rem; background: transparent; font-size: .75rem; font-weight: 600; color: color-mix(in srgb,var(--ink) 40%,transparent); cursor: pointer; font-family: inherit; transition: all .12s; }
+  .add-row-btn:hover { border-color: var(--blue); color: var(--blue); }
+  .faq-edit-item { display: flex; flex-direction: column; gap: .35rem; padding: .5rem; background: color-mix(in srgb,var(--cream) 60%,transparent); border-radius: .75rem; border: 1px solid color-mix(in srgb,var(--ink) 6%,transparent); }
+  .faq-item-hdr { display: flex; align-items: center; gap: .35rem; }
+  .faq-item-hdr .p-label { flex: 1; }
+  .p-toggle-row { display: flex; align-items: center; gap: .5rem; font-size: .8rem; cursor: pointer; }
+  .p-toggle-row input { width: 1rem; height: 1rem; cursor: pointer; }
+
+  /* Columns attr panel */
+  .back-btn { display: flex; align-items: center; gap: .35rem; padding: .35rem .6rem; border-radius: .5rem; border: 1px solid color-mix(in srgb,var(--ink) 10%,transparent); background: color-mix(in srgb,var(--cream) 60%,transparent); font-size: .75rem; font-weight: 600; color: color-mix(in srgb,var(--ink) 50%,transparent); cursor: pointer; font-family: inherit; transition: all .12s; }
+  .back-btn:hover { border-color: var(--ink); color: var(--ink); }
+  .inner-block-hdr { display: flex; align-items: center; gap: .4rem; padding: .4rem .6rem; background: color-mix(in srgb,var(--blue) 8%,transparent); border-radius: .5rem; }
+  .col-blocks-list { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem; padding: .4rem; background: color-mix(in srgb,var(--ink) 3%,transparent); border-radius: .5rem; }
+  .col-idx-label { font-size: .65rem; font-weight: 700; color: color-mix(in srgb,var(--ink) 35%,transparent); min-width: 2rem; }
+  .inner-chip-sm { padding: .2rem .45rem; border: 1px solid color-mix(in srgb,var(--ink) 12%,transparent); border-radius: .375rem; background: white; font-size: .68rem; font-weight: 600; color: color-mix(in srgb,var(--ink) 55%,transparent); cursor: pointer; font-family: inherit; transition: all .12s; }
+  .inner-chip-sm:hover { border-color: var(--blue); color: var(--blue); }
+  .col-add-sm { padding: .2rem .5rem; border: 1.5px dashed color-mix(in srgb,var(--ink) 18%,transparent); border-radius: .375rem; background: transparent; font-size: .75rem; color: color-mix(in srgb,var(--ink) 35%,transparent); cursor: pointer; transition: all .12s; }
+  .col-add-sm:hover { border-color: var(--blue); color: var(--blue); }
 </style>

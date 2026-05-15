@@ -3,6 +3,7 @@
     data: {
       emojis?: string[]
     }
+    accentColor?: string
   }
 
   let { data }: Props = $props()
