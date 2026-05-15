@@ -343,7 +343,7 @@
 
           {#if block.type === 'avatar'}
             <div class="w-full text-center">
-              <div class="avatar-frame" style="border-radius:{s.radius};border:{s.borderWidth} {s.borderStyle} {s.borderColor};opacity:{s.opacity/100};">
+              <div class="avatar-frame" style="background:{mix(s.bgColor,s.opacity)};border-radius:{s.radius};border:{s.borderWidth} {s.borderStyle} {s.borderColor};">
                 <img src={block.data.src} alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:{avR(block.id,block.data.shape)};" />
               </div>
             </div>
@@ -832,7 +832,7 @@
   @media (min-width: 1280px) { .grip { display: flex; } }
 
   /* Blocks */
-  .avatar-frame { width: 8rem; height: 8rem; margin: 0 auto; overflow: hidden; background: color-mix(in srgb,var(--ink) 30%,transparent); padding: 6px; display: block; }
+  .avatar-frame { width: 8rem; height: 8rem; margin: 0 auto; overflow: hidden; padding: 6px; display: block; }
   .profile-name { font-size: 1.875rem; font-weight: 900; letter-spacing: -.025em; line-height: 1.2; word-break: break-all; margin: 0; }
   .section-wrap { padding: .25rem 0; }
   .section-inner { display: flex; align-items: center; gap: .75rem; padding: 0 .75rem; }
