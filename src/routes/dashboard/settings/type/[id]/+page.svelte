@@ -7,6 +7,7 @@
   const type = $derived(data.type)
   const options = $derived(data.options as any[])
   const images = $derived<string[]>(JSON.parse((data.type as any)?.preview_images ?? "[]"))
+  const returnTo = $derived(data.returnTo ?? "/dashboard/settings")
 
   let editingOptionId = $state<string | null>(null)
   let uploading = $state(false)
@@ -18,7 +19,7 @@
 </svelte:head>
 
 <div class="page">
-  <a href="/dashboard/settings" class="back">← 返回設定</a>
+  <a href={returnTo} class="back">← 返回</a>
 
   <header class="header">
     <h1>{type ? "編輯委託項目" : "新增委託項目"}</h1>
@@ -28,6 +29,7 @@
         action="?/deleteType"
         onsubmit={(e) => { if (!confirm('確定要刪除嗎？相關的加價選項也會被隱藏')) e.preventDefault() }}
       >
+        <input type="hidden" name="returnTo" value={returnTo} />
         <button type="submit" class="btn-delete-type">刪除此項目</button>
       </form>
     {/if}
@@ -57,6 +59,7 @@
         </div>
       </div>
 
+      <input type="hidden" name="returnTo" value={returnTo} />
       <button type="submit" class="btn-save">儲存項目資訊</button>
     </form>
   </section>

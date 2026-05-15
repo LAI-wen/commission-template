@@ -4,47 +4,49 @@ import { getCommissionTypeWithOptions, upsertCommissionType, deleteCommissionTyp
 import { nanoid } from "nanoid"
 import { validateArtistSession } from "$lib/auth"
 
-export const load: PageServerLoad = async ({ params, platform }) => {
+export const load: PageServerLoad = async ({ params, platform, url }) => {
   const db = platform!.env.DB
-  
+  const returnTo = url.searchParams.get("return") ?? "/dashboard/settings"
+
   if (params.id === "new") {
-    return { type: null, options: [] }
+    return { type: null, options: [], returnTo }
   }
 
   const { type, options } = await getCommissionTypeWithOptions(db, params.id)
   if (!type) throw error(404, "找不到此項目")
 
-  return { type, options }
+  return { type, options, returnTo }
 }
 
 export const actions: Actions = {
   saveType: async ({ request, platform, params }) => {
     const db = platform!.env.DB
     const data = await request.formData()
-    
+
     const name = data.get("name") as string
     const description = data.get("description") as string
     const base_price = parseInt(data.get("base_price") as string)
     const sort_order = parseInt(data.get("sort_order") as string)
+    const returnTo = (data.get("returnTo") as string) || "/dashboard/settings"
 
     if (!name) return fail(400, { message: "名稱不能為空" })
 
     const id = params.id === "new" ? undefined : params.id
-    const result = await upsertCommissionType(db, { id, name, description, base_price, sort_order })
-    
+    await upsertCommissionType(db, { id, name, description, base_price, sort_order })
+
     if (params.id === "new") {
-      // 如果是新創立，需要導向正確的 ID 頁面（或者直接回列表）
-      // 這裡簡單處理：導回設定頁
-      throw redirect(302, "/dashboard/settings")
+      throw redirect(302, returnTo)
     }
 
     return { success: true }
   },
 
-  deleteType: async ({ platform, params }) => {
+  deleteType: async ({ request, platform, params }) => {
     const db = platform!.env.DB
+    const data = await request.formData()
+    const returnTo = (data.get("returnTo") as string) || "/dashboard/settings"
     await deleteCommissionType(db, params.id)
-    throw redirect(302, "/dashboard/settings")
+    throw redirect(302, returnTo)
   },
 
   saveOption: async ({ request, platform, params }) => {

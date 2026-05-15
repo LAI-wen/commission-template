@@ -120,7 +120,7 @@
       <div class="types-section">
         <div class="types-header">
           <h3>委託項目</h3>
-          <a href="/dashboard/settings/type/new" class="btn primary small">+ 新增項目</a>
+          <a href="/dashboard/settings/type/new?return=/dashboard/manage" class="btn primary small">+ 新增項目</a>
         </div>
         <div class="type-list">
           {#each types as type}
@@ -130,14 +130,14 @@
                 <div class="type-desc">{type.description}</div>
               </div>
               <div class="type-price">NT$ {type.base_price.toLocaleString()}</div>
-              <a href="/dashboard/settings/type/{type.id}" class="btn ghost small">編輯</a>
+              <a href="/dashboard/settings/type/{type.id}?return=/dashboard/manage" class="btn ghost small">編輯</a>
             </div>
           {/each}
         </div>
         {#if types.length === 0}
           <div class="empty-state">
             <p>尚未新增委託項目</p>
-            <a href="/dashboard/settings/type/new" class="btn primary">新增第一個項目</a>
+            <a href="/dashboard/settings/type/new?return=/dashboard/manage" class="btn primary">新增第一個項目</a>
           </div>
         {/if}
       </div>
