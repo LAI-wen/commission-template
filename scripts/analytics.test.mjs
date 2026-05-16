@@ -52,3 +52,26 @@ test('formatBytes: MB', () => {
 test('formatBytes: GB', () => {
   assert.equal(formatBytes(2 * 1024 * 1024 * 1024), '2.00 GB')
 })
+
+test('formatBytes: zero', () => {
+  assert.equal(formatBytes(0), '0 B')
+})
+
+test('formatBytes: exact KB boundary', () => {
+  assert.equal(formatBytes(1024), '1.0 KB')
+})
+
+test('formatBytes: exact MB boundary', () => {
+  assert.equal(formatBytes(1024 * 1024), '1.0 MB')
+})
+
+test('last6Months consecutive months differ by 1 month', () => {
+  const months = last6Months()
+  for (let i = 1; i < months.length; i++) {
+    const [prevY, prevM] = months[i - 1].split('-').map(Number)
+    const [curY, curM] = months[i].split('-').map(Number)
+    const prevTotal = prevY * 12 + prevM
+    const curTotal = curY * 12 + curM
+    assert.equal(curTotal - prevTotal, 1, `Expected consecutive months at index ${i}`)
+  }
+})
