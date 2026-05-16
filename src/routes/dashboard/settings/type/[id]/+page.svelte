@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PageData, ActionData } from "./$types"
   import { enhance } from "$app/forms"
+  import { compressForUpload } from "$lib/utils/image-compress"
 
   let { data, form }: { data: PageData; form: ActionData } = $props()
 
@@ -94,7 +95,7 @@
               const file = (e.target as HTMLInputElement).files?.[0]
               if (!file) return
               uploading = true; uploadError = ""
-              const fd = new FormData(); fd.append("file", file)
+              const fd = new FormData(); fd.append("file", await compressForUpload(file))
               const res = await fetch("?/uploadImage", { method: "POST", body: fd })
               uploading = false
               if (!res.ok) uploadError = "上傳失敗，請重試"

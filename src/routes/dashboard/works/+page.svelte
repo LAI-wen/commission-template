@@ -2,6 +2,7 @@
   import type { PageData, ActionData } from "./$types"
   import { enhance } from "$app/forms"
   import type { Work } from "$lib/db"
+  import { compressForUpload } from "$lib/utils/image-compress"
 
   let { data, form }: { data: PageData; form: ActionData } = $props()
 
@@ -30,13 +31,13 @@
   })
 
   async function uploadFile(file: File, type: "preview" | "original") {
-    const fd = new FormData()
-    fd.append("file", file)
     if (type === "preview") uploadingPreview = true
     else uploadingOriginal = true
     uploadError = ""
 
     try {
+      const fd = new FormData()
+      fd.append("file", await compressForUpload(file))
       const res = await fetch("/api/upload", { method: "POST", body: fd })
       if (!res.ok) { uploadError = await res.text(); return }
       const { url } = await res.json() as { url: string }

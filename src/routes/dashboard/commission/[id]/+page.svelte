@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from "$app/forms"
   import type { PageData } from "./$types"
+  import { compressForUpload } from "$lib/utils/image-compress"
 
   let { data }: { data: PageData } = $props()
 
@@ -215,7 +216,11 @@
           <span>DRAFT VERSIONS</span>
           <label class="btn-sm" style="cursor:pointer">
             + 上傳版本
-            <form method="POST" action="?/uploadRevision" enctype="multipart/form-data" use:enhance>
+            <form method="POST" action="?/uploadRevision" enctype="multipart/form-data"
+            use:enhance={async ({ formData }) => {
+              const f = formData.get('file') as File | null
+              if (f && f.size > 0) formData.set('file', await compressForUpload(f))
+            }}>
               <input
                 type="file"
                 name="file"

@@ -4,6 +4,7 @@
   import { DEFAULT_GLOBAL } from './globalDesign'
   import type { GlobalDesign } from './globalDesign'
   import type { CommissionType } from '$lib/db'
+  import { compressForUpload } from '$lib/utils/image-compress'
 
   type StyleMap = {
     bgColor?: string; textColor?: string; borderColor?: string
@@ -296,7 +297,7 @@
     uploading = true
     try {
       const fd = new FormData()
-      fd.append('file', file)
+      fd.append('file', await compressForUpload(file))
       const res = await fetch('/api/upload', { method: 'POST', body: fd })
       if (!res.ok) { toast('上傳失敗'); return }
       const { url } = await res.json() as { url: string }
@@ -317,7 +318,7 @@
   async function uploadGalleryImage(file: File, blockId: string) {
     uploading = true
     try {
-      const fd = new FormData(); fd.append('file', file)
+      const fd = new FormData(); fd.append('file', await compressForUpload(file))
       const res = await fetch('/api/upload', { method: 'POST', body: fd })
       if (!res.ok) { toast('上傳失敗'); return }
       const { url } = await res.json() as { url: string }
@@ -338,7 +339,7 @@
     bgUploading = true
     try {
       const fd = new FormData()
-      fd.append('file', file)
+      fd.append('file', await compressForUpload(file))
       const res = await fetch('/api/upload', { method: 'POST', body: fd })
       if (!res.ok) { toast('上傳失敗'); return }
       const { url } = await res.json() as { url: string }

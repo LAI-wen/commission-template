@@ -31,6 +31,7 @@
   "dependencies": {
     "@hono/zod-validator": "^0.7.6",
     "arctic": "^3.7.0",
+    "browser-image-compression": "^2.0.2",
     "hono": "^4.12.18",
     "lucide-svelte": "^1.0.1",
     "marked": "^18.0.3",
