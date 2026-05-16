@@ -21,6 +21,9 @@ export const load: PageServerLoad = async ({ platform }) => {
     siteUrl:      (creator as any)?.site_url ?? null,
     layoutWidth,
     radius,
+    emailMode:    (creator?.email_mode as string) ?? 'none',
+    resendApiKey: (creator?.resend_api_key as string | null) ?? null,
+    resendFrom:   (creator?.resend_from as string | null) ?? null,
   }
 }
 
@@ -59,5 +62,26 @@ export const actions: Actions = {
     } catch {
       return fail(500, { message: "儲存失敗" })
     }
+  },
+
+  saveEmail: async ({ request, platform }) => {
+    const db = platform!.env.DB
+    const data = await request.formData()
+    const emailMode    = ((data.get("email_mode")     as string) ?? "none").trim()
+    const resendApiKey = ((data.get("resend_api_key") as string) ?? "").trim()
+    const resendFrom   = ((data.get("resend_from")    as string) ?? "").trim()
+
+    if (emailMode === "resend" && resendApiKey) {
+      const check = await fetch("https://api.resend.com/domains", {
+        headers: { Authorization: `Bearer ${resendApiKey}` },
+      })
+      if (!check.ok) return fail(400, { emailError: "API Key 無效，請確認後重試" })
+    }
+
+    await db.prepare(
+      "UPDATE creators SET email_mode = ?, resend_api_key = ?, resend_from = ? WHERE id = 'main'"
+    ).bind(emailMode, resendApiKey || null, resendFrom || null).run()
+
+    return { emailSaved: true }
   },
 }

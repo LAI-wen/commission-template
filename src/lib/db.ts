@@ -79,6 +79,8 @@ export type Creator = {
   process_config: string | null
   site_url: string | null
   email_mode: string | null
+  resend_api_key: string | null
+  resend_from: string | null
   notify_client_message_email: number
 }
 
