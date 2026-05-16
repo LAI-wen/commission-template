@@ -1,3 +1,17 @@
+## v2026-05-16.10
+
+### ✨ 新功能
+- add image storage, email stats, and Cloudflare link to stats dashboard
+- load image storage and email monthly stats from KV in stats page
+- increment monthly email KV counter after each dispatch
+
+### 🐛 修復
+- 修復 terms-content :global() CSS 建置錯誤
+
+### 📝 其他
+- update CHANGELOG.md [skip ci]
+
+<!-- changelog-hash: 4bea674543d0b7a912e983f3aeefdd8bd87cb4f0 -->
 ## v2026-05-16.9
 
 ### 📝 其他
