@@ -2,7 +2,7 @@ export function last6Months(): string[] {
   const months: string[] = []
   const d = new Date()
   for (let i = 5; i >= 0; i--) {
-    const t = new Date(d.getFullYear(), d.getMonth() - i, 1)
+    const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - i, 1))
     months.push(t.toISOString().slice(0, 7))
   }
   return months
