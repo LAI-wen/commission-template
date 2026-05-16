@@ -1,3 +1,13 @@
+## v2026-05-16.8
+
+### ✨ 新功能
+- increment KV image stats on local R2 upload (non-blocking)
+- add recalculate-storage endpoint (paginated R2 scan → KV)
+
+### 📝 其他
+- update CHANGELOG.md [skip ci]
+
+<!-- changelog-hash: 6922c2f80edfd38373311348f68319b2792b0f8e -->
 ## v2026-05-16.7
 
 ### ✨ 新功能
