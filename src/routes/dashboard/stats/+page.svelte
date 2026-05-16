@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { invalidateAll } from "$app/navigation"
+  import { formatBytes } from "$lib/analytics"
   import type { PageData } from "./$types"
 
   let { data }: { data: PageData } = $props()
@@ -6,6 +8,9 @@
   const monthly = $derived(data.monthly)
   const overall = $derived(data.overall)
   const topTypes = $derived(data.topTypes)
+  const emailMonthly = $derived(data.emailMonthly)
+  const imageCount = $derived(data.imageCount)
+  const imageSizeBytes = $derived(data.imageSizeBytes)
 
   function formatMonth(ym: string) {
     const [, m] = ym.split("-")
@@ -14,6 +19,7 @@
 
   const maxTotal = $derived(Math.max(...monthly.map(m => m.total), 1))
   const maxRevenue = $derived(Math.max(...monthly.map(m => m.revenue), 1))
+  const maxEmail = $derived(Math.max(...emailMonthly.map(m => m.count), 1))
 
   const currentYear = new Date().getFullYear()
   const yearRevenue = $derived(
@@ -21,6 +27,28 @@
       .filter(m => m.month.startsWith(String(currentYear)))
       .reduce((sum, m) => sum + m.revenue, 0)
   )
+
+  const currentMonthEmail = $derived(
+    emailMonthly.length > 0 ? emailMonthly[emailMonthly.length - 1].count : 0
+  )
+
+  let recalcLoading = $state(false)
+  let recalcDone = $state(false)
+
+  async function recalculate() {
+    recalcLoading = true
+    recalcDone = false
+    try {
+      const res = await fetch('/api/admin/recalculate-storage', { method: 'POST' })
+      if (res.ok) {
+        recalcDone = true
+        await invalidateAll()
+        setTimeout(() => { recalcDone = false }, 2000)
+      }
+    } finally {
+      recalcLoading = false
+    }
+  }
 </script>
 
 <div class="page">
@@ -45,6 +73,26 @@
     <div class="stat-card highlight">
       <span class="stat-label">累計收入（已收款）</span>
       <span class="stat-value">NT$ {(overall?.total_revenue ?? 0).toLocaleString()}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">
+        圖片儲存
+        <button
+          class="recalc-btn"
+          onclick={recalculate}
+          disabled={recalcLoading}
+          title="重新計算"
+        >
+          {#if recalcDone}✓{:else if recalcLoading}…{:else}↺{/if}
+        </button>
+      </span>
+      <span class="stat-value small">{imageCount} 張</span>
+      <span class="stat-sub">{formatBytes(imageSizeBytes)}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Email 本月</span>
+      <span class="stat-value">{currentMonthEmail}</span>
+      <span class="stat-sub">封</span>
     </div>
   </div>
 
@@ -159,6 +207,40 @@
       </div>
     </section>
   {/if}
+
+  <!-- 近 6 個月 Email 寄件數 -->
+  <section class="section">
+    <h2>近 6 個月 Email 寄件數</h2>
+    <div class="bar-chart">
+      {#each emailMonthly as m}
+        <div class="bar-col">
+          <div class="bar-wrap">
+            <div
+              class="bar email"
+              style="height: {(m.count / maxEmail * 100).toFixed(1)}%"
+              title="{m.count} 封"
+            ></div>
+          </div>
+          <span class="bar-label">{formatMonth(m.month)}</span>
+          <span class="bar-value">{m.count > 0 ? m.count : '—'}</span>
+        </div>
+      {/each}
+    </div>
+  </section>
+
+  <!-- 訪客流量 -->
+  <section class="section">
+    <h2>訪客流量</h2>
+    <p class="cf-desc">由 Cloudflare Analytics 提供</p>
+    <a
+      href="https://dash.cloudflare.com/"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="cf-link"
+    >
+      前往 Cloudflare Dashboard →
+    </a>
+  </section>
 </div>
 
 <style>
@@ -250,4 +332,26 @@
     color: var(--color-text-tertiary); font-size: 0.875rem;
     display: flex; flex-direction: column; gap: 0.35rem;
   }
+
+  .stat-value.small { font-size: 1.2rem; }
+  .stat-sub { font-size: 0.75rem; color: var(--color-text-secondary); }
+
+  .recalc-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 0.75rem; color: var(--color-text-tertiary);
+    padding: 0 0.15rem; margin-left: 0.25rem;
+    opacity: 0.7;
+  }
+  .recalc-btn:hover { opacity: 1; }
+  .recalc-btn:disabled { cursor: default; }
+
+  .bar.email { background: #f59e0b; }
+
+  .cf-desc { font-size: 0.8rem; color: var(--color-text-secondary); margin: 0; }
+  .cf-link {
+    font-size: 0.85rem; color: var(--color-text-primary);
+    text-decoration: none; border-bottom: 1px solid var(--color-border-tertiary);
+    padding-bottom: 1px; width: fit-content;
+  }
+  .cf-link:hover { border-bottom-color: var(--color-border-primary); }
 </style>
