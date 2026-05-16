@@ -1,6 +1,6 @@
 import { json, error } from "@sveltejs/kit"
 import { validateArtistSession } from "$lib/auth"
-import { setDelivery } from "$lib/db"
+import { setDelivery, getCommission } from "$lib/db"
 import { nanoid } from "nanoid"
 import type { RequestHandler } from "./$types"
 
@@ -10,12 +10,14 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
   const session = await validateArtistSession(request, env)
   if (!session) throw error(401, "Unauthorized")
 
+  const commissionId = params.id
+  const commission = await getCommission(env.DB, commissionId)
+  if (!commission) throw error(404, "Commission not found")
+
   const formData = await request.formData()
   const file = formData.get("file") as File | null
   if (!file || file.size === 0) throw error(400, "No file provided")
   if (file.size > 50 * 1024 * 1024) throw error(413, "File too large (max 50MB)")
-
-  const commissionId = params.id
   const ext = file.name.split(".").pop() ?? "bin"
   const r2Key = `delivery/${commissionId}/${nanoid()}.${ext}`
 
