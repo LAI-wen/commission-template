@@ -75,22 +75,23 @@ export function formatMarkdown(version, groups, headHash) {
 export function formatDiscordEmbed(repoName, version, groups, totalCommits, date = new Date()) {
   const color = COLORS[repoName] ?? 0x7289DA
   const dateStr = date.toISOString().slice(0, 10)
-  const fields = []
+  const sections = []
 
-  for (const [key, label] of [['feat', '✨ 新功能'], ['fix', '🐛 修復'], ['other', '📝 其他']]) {
+  for (const [key, label] of [['feat', '✨ **新功能**'], ['fix', '🐛 **修復**'], ['other', '📝 **其他**']]) {
     if (groups[key].length === 0) continue
     const { displayed, extra } = truncateList(groups[key])
-    let value = displayed.map(d => `• ${d}`).join('\n')
-    if (extra > 0) value += `\n還有 ${extra} 條...`
-    fields.push({ name: label, value, inline: false })
+    let block = `${label}\n` + displayed.join('\n')
+    if (extra > 0) block += `\n還有 ${extra} 條...`
+    sections.push(block)
   }
 
   return {
     embeds: [{
-      title: `🆕  ${repoName}  ${version}`,
+      title: `🆕  ${version}`,
       color,
-      fields,
-      footer: { text: `${dateStr} · ${totalCommits} commits` },
+      description: sections.join('\n\n'),
+      footer: { text: `${repoName} · ${dateStr} · ${totalCommits} commits` },
+      timestamp: date.toISOString(),
     }],
   }
 }

@@ -122,9 +122,12 @@ test('formatDiscordEmbed has correct title and color for commission-template', (
   const groups = { feat: ['new thing'], fix: [], other: [] }
   const date = new Date('2026-05-16')
   const payload = formatDiscordEmbed('commission-template', 'v2026-05-16', groups, 1, date)
-  assert.equal(payload.embeds[0].title, '🆕  commission-template  v2026-05-16')
+  assert.equal(payload.embeds[0].title, '🆕  v2026-05-16')
   assert.equal(payload.embeds[0].color, 0x9B59B6)
-  assert.equal(payload.embeds[0].footer.text, '2026-05-16 · 1 commits')
+  assert.ok(payload.embeds[0].footer.text.includes('commission-template'))
+  assert.ok(payload.embeds[0].footer.text.includes('2026-05-16'))
+  assert.ok(payload.embeds[0].description.includes('✨ **新功能**'))
+  assert.ok(payload.embeds[0].description.includes('new thing'))
 })
 
 test('formatDiscordEmbed truncates lists longer than 10', () => {
@@ -132,7 +135,7 @@ test('formatDiscordEmbed truncates lists longer than 10', () => {
   const groups = { feat: manyFeats, fix: [], other: [] }
   const date = new Date('2026-05-16')
   const payload = formatDiscordEmbed('commission-template', 'v2026-05-16', groups, 13, date)
-  const field = payload.embeds[0].fields[0]
-  assert.ok(field.value.includes('還有 3 條...'))
-  assert.equal(field.value.split('•').length - 1, 10)
+  const desc = payload.embeds[0].description
+  assert.ok(desc.includes('還有 3 條...'))
+  assert.equal(desc.split('\n').filter(l => l.startsWith('feature')).length, 10)
 })
