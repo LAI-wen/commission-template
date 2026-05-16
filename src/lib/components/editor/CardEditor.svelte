@@ -79,6 +79,21 @@
     JSON.stringify({ blocks, overrides, globalDesign }) !== savedSnapshot
   )
 
+  let autosaveTimer: ReturnType<typeof setTimeout> | null = null
+
+  $effect(() => {
+    if (!isDirty) return
+    if (autosaveTimer) clearTimeout(autosaveTimer)
+    autosaveTimer = setTimeout(() => {
+      try {
+        localStorage.setItem('card_draft', JSON.stringify({ blocks, overrides, globalDesign }))
+      } catch {}
+    }, 2000)
+    return () => {
+      if (autosaveTimer) clearTimeout(autosaveTimer)
+    }
+  })
+
   let selBlock = $derived(blocks.find(b => b.id === selectedId) ?? null)
   const selInnerBlock = $derived(
     selectedInner && selBlock?.type === 'columns'
