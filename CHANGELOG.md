@@ -1,3 +1,18 @@
+## v2026-05-16.4
+
+### ✨ 新功能
+- 重設 Discord 嵌入版面
+- add Email 通知設定 section to settings page
+- load email settings and add saveEmail action with API key validation
+- add resend_from column to creators table
+
+### 🐛 修復
+- read resend_from from DB instead of hardcoded test address
+
+### 📝 其他
+- update CHANGELOG.md [skip ci]
+
+<!-- changelog-hash: 8235f75cd72cd57d1f5e380951e3adc0a8528c82 -->
 ## v2026-05-16.3
 
 ### ✨ 新功能
