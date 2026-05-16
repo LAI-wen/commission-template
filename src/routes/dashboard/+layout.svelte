@@ -11,6 +11,7 @@
     Settings: undefined,
     Home: undefined,
     LogOut: undefined,
+    Archive: undefined,
   })
 
   if (browser) {
@@ -22,6 +23,7 @@
     import("lucide-svelte/icons/settings").then(m => icons.Settings = m.default)
     import("lucide-svelte/icons/house").then(m => icons.Home = m.default)
     import("lucide-svelte/icons/log-out").then(m => icons.LogOut = m.default)
+    import("lucide-svelte/icons/archive").then(m => icons.Archive = m.default)
   }
 
   const navItems = [
@@ -31,6 +33,7 @@
     { href: "/dashboard/works",    label: "作品",   iconKey: "Image" },
     { href: "/dashboard/manage",   label: "管理",   iconKey: "SlidersHorizontal" },
     { href: "/dashboard/stats",    label: "統計",   iconKey: "BarChart3" },
+    { href: "/dashboard/backup",   label: "備份",   iconKey: "Archive" },
     { href: "/dashboard/settings", label: "設定",   iconKey: "Settings" },
   ]
 
