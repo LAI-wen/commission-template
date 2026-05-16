@@ -1,3 +1,10 @@
+## v2026-05-16.9
+
+### 📝 其他
+- 快取 migration 狀態並行驗證以加速儀表板切換
+- update CHANGELOG.md [skip ci]
+
+<!-- changelog-hash: eeda1b98b8622de0b80db03ef0e0ddf2e29d9d90 -->
 ## v2026-05-16.8
 
 ### ✨ 新功能
