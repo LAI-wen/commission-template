@@ -1,3 +1,12 @@
+## v2026-05-16.11
+
+### 🐛 修復
+- 修復 unpkg @latest 重新導向被 CORS 阻擋的問題
+
+### 📝 其他
+- update CHANGELOG.md [skip ci]
+
+<!-- changelog-hash: 3d8698ecd8ba58ef47eafc0b37f445241ca847b8 -->
 ## v2026-05-16.10
 
 ### ✨ 新功能
