@@ -502,8 +502,11 @@
   .terms-title { font-weight: 900; font-size: 0.9rem; margin-bottom: 0.75rem; }
   .terms-content { font-size: 0.8rem; line-height: 1.7; opacity: 0.85; }
   .terms-content :global(p) { margin: 0.5em 0; }
-  .terms-content :global(ul, ol) { padding-left: 1.5em; margin: 0.5em 0; }
-  .terms-content :global(h1, h2, h3) { font-size: 0.9em; font-weight: 700; margin: 0.75em 0 0.25em; }
+  .terms-content :global(ul) { padding-left: 1.5em; margin: 0.5em 0; }
+  .terms-content :global(ol) { padding-left: 1.5em; margin: 0.5em 0; }
+  .terms-content :global(h1) { font-size: 0.9em; font-weight: 700; margin: 0.75em 0 0.25em; }
+  .terms-content :global(h2) { font-size: 0.9em; font-weight: 700; margin: 0.75em 0 0.25em; }
+  .terms-content :global(h3) { font-size: 0.9em; font-weight: 700; margin: 0.75em 0 0.25em; }
 
   .pricing-block { display: flex; flex-wrap: wrap; gap: 0.75rem; }
   .pricing-plan { flex: 1; min-width: 130px; padding: 1rem; border-radius: 0.875rem; background: rgba(255,255,255,.08); position: relative; }
