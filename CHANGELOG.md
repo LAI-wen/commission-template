@@ -1,3 +1,12 @@
+## v2026-05-16.12
+
+### 🐛 修復
+- dotlottie-web 已移除 .wc.js，改用 canvas 程式化 API 動態載入
+
+### 📝 其他
+- update CHANGELOG.md [skip ci]
+
+<!-- changelog-hash: cf42df6d24b8f9a7a5814814b1c461e42951d073 -->
 ## v2026-05-16.11
 
 ### 🐛 修復
