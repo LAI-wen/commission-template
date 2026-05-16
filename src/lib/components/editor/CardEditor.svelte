@@ -125,13 +125,21 @@
         overrides = initialConfig.overrides ?? {}
         if (initialConfig.globalDesign) globalDesign = { ...DEFAULT_GLOBAL, ...initialConfig.globalDesign }
       } else {
-        // 無 DB 資料：退回 localStorage 草稿
-        const sb = localStorage.getItem('card_blocks')
-        const so = localStorage.getItem('card_overrides')
-        const sg = localStorage.getItem('card_global')
-        if (sb) blocks = JSON.parse(sb)
-        if (so) overrides = JSON.parse(so)
-        if (sg) globalDesign = { ...DEFAULT_GLOBAL, ...JSON.parse(sg) }
+        // 無 DB 資料：退回 localStorage 草稿（優先用 card_draft，其次舊 key）
+        const draft = localStorage.getItem('card_draft')
+        if (draft) {
+          const d = JSON.parse(draft)
+          if (d.blocks?.length) blocks = d.blocks
+          overrides = d.overrides ?? {}
+          if (d.globalDesign) globalDesign = { ...DEFAULT_GLOBAL, ...d.globalDesign }
+        } else {
+          const sb = localStorage.getItem('card_blocks')
+          const so = localStorage.getItem('card_overrides')
+          const sg = localStorage.getItem('card_global')
+          if (sb) blocks = JSON.parse(sb)
+          if (so) overrides = JSON.parse(so)
+          if (sg) globalDesign = { ...DEFAULT_GLOBAL, ...JSON.parse(sg) }
+        }
       }
     } catch {}
     savedSnapshot = JSON.stringify({ blocks, overrides, globalDesign })
@@ -388,7 +396,9 @@
   // ── 儲存 ──
   function saveAll() {
     try {
-      // 保存到 localStorage
+      // 保存草稿到 localStorage（兩套 key 保持同步）
+      const snap = JSON.stringify({ blocks, overrides, globalDesign })
+      localStorage.setItem('card_draft', snap)
       localStorage.setItem('card_blocks', JSON.stringify(blocks))
       localStorage.setItem('card_overrides', JSON.stringify(overrides))
       localStorage.setItem('card_global', JSON.stringify(globalDesign))
