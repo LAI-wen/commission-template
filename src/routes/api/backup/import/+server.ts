@@ -44,16 +44,17 @@ export const POST: RequestHandler = async ({ request, platform }) => {
   // 還原 R2 圖片（若 ZIP 含圖片且 R2 可用）
   let imageCount = 0
   if (env.R2 && Object.keys(parsed.images).length > 0) {
-    await Promise.all(
+    const r2 = env.R2
+    const results = await Promise.all(
       Object.entries(parsed.images).map(async ([path, content]) => {
-        // path 格式：images/works/abc.webp 或 images/types/abc.webp
         const key = path.replace(/^images\/(works|types)\//, '')
-        await env.R2!.put(key, content, {
+        await r2.put(key, content, {
           httpMetadata: { contentType: guessContentType(key) },
         })
-        imageCount++
+        return 1 as const
       })
     )
+    imageCount = results.length
   }
 
   return Response.json({
