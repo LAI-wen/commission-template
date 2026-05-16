@@ -144,10 +144,13 @@ const ALTER_COLUMNS = [
   `ALTER TABLE creators ADD COLUMN site_url TEXT`,
 ]
 
+let _migrated = false
+
 export async function ensureMigrated(env: Env): Promise<void> {
   // Skip migration in dev if KV is not available
   if (!env?.KV) return
-  if (await env.KV.get(KV_KEY)) return
+  if (_migrated) return
+  if (await env.KV.get(KV_KEY)) { _migrated = true; return }
 
   // Create all tables (idempotent)
   await env.DB.batch(CREATE_TABLES.map(sql => env.DB.prepare(sql)))
@@ -163,4 +166,5 @@ export async function ensureMigrated(env: Env): Promise<void> {
   ).run()
 
   await env.KV.put(KV_KEY, "1")
+  _migrated = true
 }

@@ -9,12 +9,13 @@ export const load: LayoutServerLoad = async ({ request, platform, url }) => {
   // Skip auth check for the login page itself
   if (url.pathname === "/dashboard/login") return {}
 
-  await ensureMigrated(env)
-
   // In development or if KV is not available, skip auth check
   if (!env?.KV) return {}
 
-  const isArtist = await validateArtistSession(request, env)
+  const [, isArtist] = await Promise.all([
+    ensureMigrated(env),
+    validateArtistSession(request, env),
+  ])
   if (!isArtist) throw redirect(302, "/dashboard/login")
 
   return {}
