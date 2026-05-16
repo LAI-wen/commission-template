@@ -17,12 +17,12 @@ export const load: PageServerLoad = async ({ platform }) => {
   } catch { /* use defaults */ }
 
   return {
-    hubToken:     (creator?.hub_token as string | null) ?? null,
+    hasHubToken:  !!(creator?.hub_token),
     siteUrl:      (creator as any)?.site_url ?? null,
     layoutWidth,
     radius,
     emailMode:    (creator?.email_mode as string) ?? 'none',
-    resendApiKey: (creator?.resend_api_key as string | null) ?? null,
+    hasResendApiKey: !!(creator?.resend_api_key),
     resendFrom:   (creator?.resend_from as string | null) ?? null,
   }
 }
@@ -43,6 +43,25 @@ export const actions: Actions = {
       .bind(token, siteUrl).run()
     await pushToHub(env)
     return { hubSaved: true }
+  },
+
+  saveTheme: async ({ request, platform }) => {
+    const db = platform!.env.DB
+    const data = await request.formData()
+    const themePalette      = (data.get("themePalette") as string) || 'blue'
+    const themeCustomColors = JSON.parse((data.get("themeCustomColors") as string) || '[]')
+
+    try {
+      const creator = await getCreator(db)
+      const existing = JSON.parse((creator?.page_config as string) ?? "{}")
+      await updatePageConfig(db, JSON.stringify({
+        ...existing,
+        globalDesign: { ...(existing.globalDesign ?? {}), themePalette, themeCustomColors },
+      }))
+      return { themeSavedServer: true }
+    } catch {
+      return fail(500, { message: "儲存失敗" })
+    }
   },
 
   saveLayout: async ({ request, platform }) => {
@@ -78,9 +97,15 @@ export const actions: Actions = {
       if (!check.ok) return fail(400, { emailError: "API Key 無效，請確認後重試" })
     }
 
-    await db.prepare(
-      "UPDATE creators SET email_mode = ?, resend_api_key = ?, resend_from = ? WHERE id = 'main'"
-    ).bind(emailMode, resendApiKey || null, resendFrom || null).run()
+    if (resendApiKey) {
+      await db.prepare(
+        "UPDATE creators SET email_mode = ?, resend_api_key = ?, resend_from = ? WHERE id = 'main'"
+      ).bind(emailMode, resendApiKey, resendFrom || null).run()
+    } else {
+      await db.prepare(
+        "UPDATE creators SET email_mode = ?, resend_from = ? WHERE id = 'main'"
+      ).bind(emailMode, resendFrom || null).run()
+    }
 
     return { emailSaved: true }
   },

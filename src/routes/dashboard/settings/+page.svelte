@@ -25,8 +25,18 @@
     customColors = loadCustomColors()
   })
 
+  async function syncThemeToServer(palette: string, colors: CustomColors) {
+    const fd = new FormData()
+    fd.append('themePalette', palette)
+    fd.append('themeCustomColors', JSON.stringify(colors))
+    await fetch('?/saveTheme', { method: 'POST', body: fd }).catch(() => {})
+  }
+
+  let colorSyncTimer: ReturnType<typeof setTimeout>
+
   function selectPalette(p: PaletteKey) {
     theme = { ...theme, palette: p }; applyTheme(theme); saveTheme(theme); flash()
+    syncThemeToServer(p, customColors)
   }
   function selectFont(f: FontKey) {
     theme = { ...theme, font: f }; applyTheme(theme); saveTheme(theme); flash()
@@ -46,6 +56,8 @@
       for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v)
     }
     flash()
+    clearTimeout(colorSyncTimer)
+    colorSyncTimer = setTimeout(() => syncThemeToServer(theme.palette, customColors), 800)
   }
 
   function copyPreset(key: PaletteKey) {
@@ -57,6 +69,7 @@
       for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v)
     }
     flash()
+    syncThemeToServer(theme.palette, customColors)
   }
 
   /* ── Layout / radius (saved to DB) ──────────── */
@@ -83,7 +96,7 @@
 
   /* ── Email settings ─────────────────────────── */
   let emailMode    = $state<string>(data.emailMode ?? 'none')
-  let resendApiKey = $state<string>(data.resendApiKey ?? '')
+  let resendApiKey = $state<string>('')
   let resendFrom   = $state<string>(data.resendFrom ?? '')
   let showApiKey   = $state(false)
 </script>
@@ -250,12 +263,12 @@
       <div class="hub-field">
         <label for="hub_token">Hub Token</label>
         <input id="hub_token" name="hub_token" type="text"
-          placeholder="貼上從 Hub 平台複製的 Token"
-          value={data.hubToken ?? ""} spellcheck="false" autocomplete="off" />
+          placeholder={data.hasHubToken ? "已設定，貼上新 Token 以覆蓋" : "貼上從 Hub 平台複製的 Token"}
+          spellcheck="false" autocomplete="off" />
         {#if form?.errors?.hub_token}
           <span class="field-error">{form.errors.hub_token[0]}</span>
         {/if}
-        {#if data.hubToken}
+        {#if data.hasHubToken}
           <span class="field-hint">已設定，可貼上新 Token 覆蓋</span>
         {:else}
           <span class="field-hint">前往 <a href="https://commission-hub.pages.dev/manage" target="_blank" rel="noopener">Hub 平台</a> 取得 Token</span>
@@ -297,7 +310,7 @@
           <div class="api-key-wrap">
             <input id="resend_api_key" name="resend_api_key"
               type={showApiKey ? "text" : "password"}
-              placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxx"
+              placeholder={data.hasResendApiKey ? "已設定，輸入新 Key 以覆蓋" : "re_xxxxxxxxxxxxxxxxxxxxxxxx"}
               bind:value={resendApiKey}
               spellcheck="false" autocomplete="off" />
             <button type="button" class="toggle-key" onclick={() => showApiKey = !showApiKey}>
