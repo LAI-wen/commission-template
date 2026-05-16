@@ -1,3 +1,27 @@
+## v2026-05-16.7
+
+### ✨ 新功能
+- add analytics KV helpers (incrementImageStats, incrementEmailCount, last6Months, formatBytes)
+- sidebar 新增備份連結
+- 新增備份還原頁面
+- 新增備份匯入 API
+- 新增備份匯出 API
+- 新增備份核心工具
+
+### 🐛 修復
+- 修復編輯器初始化 effect 無限循環
+- use UTC in last6Months to avoid off-by-one in UTC+8 timezone
+- 備份匯入加上大小限制與 R2 錯誤回報
+- 改善匯入圖片計數方式
+- 修正備份錯誤處理
+
+### 📝 其他
+- add analytics dashboard implementation plan
+- 新增計量儀表板設計文件
+- 新增 ZIP 備份用 fflate
+- update CHANGELOG.md [skip ci]
+
+<!-- changelog-hash: 37514b95f5d7129b0175a5cc8bea8b09bd3b2f8c -->
 ## v2026-05-16.6
 
 ### ✨ 新功能
