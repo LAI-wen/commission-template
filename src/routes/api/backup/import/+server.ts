@@ -19,6 +19,9 @@ export const POST: RequestHandler = async ({ request, platform }) => {
   if (!file || !file.size) {
     return Response.json({ ok: false, error: "No file provided" }, { status: 400 })
   }
+  if (file.size > 50 * 1024 * 1024) {
+    return Response.json({ ok: false, error: "備份檔案超過 50MB 上限" }, { status: 413 })
+  }
 
   let parsed: ReturnType<typeof parseZipBuffer>
   try {
@@ -43,22 +46,28 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
   // 還原 R2 圖片（若 ZIP 含圖片且 R2 可用）
   let imageCount = 0
+  let imageWarning: string | undefined
   if (env.R2 && Object.keys(parsed.images).length > 0) {
     const r2 = env.R2
-    const results = await Promise.all(
-      Object.entries(parsed.images).map(async ([path, content]) => {
-        const key = path.replace(/^images\/(works|types)\//, '')
-        await r2.put(key, content, {
-          httpMetadata: { contentType: guessContentType(key) },
+    try {
+      const results = await Promise.all(
+        Object.entries(parsed.images).map(async ([path, content]) => {
+          const key = path.replace(/^images\/(works|types)\//, '')
+          await r2.put(key, content, {
+            httpMetadata: { contentType: guessContentType(key) },
+          })
+          return 1 as const
         })
-        return 1 as const
-      })
-    )
-    imageCount = results.length
+      )
+      imageCount = results.length
+    } catch (e) {
+      imageWarning = `部分圖片還原失敗：${e instanceof Error ? e.message : String(e)}`
+    }
   }
 
   return Response.json({
     ok: true,
     stats: { tables: tableStats, images: imageCount },
+    ...(imageWarning ? { warning: imageWarning } : {}),
   })
 }
