@@ -14,7 +14,7 @@
     "deploy": "npm run build && wrangler pages deploy .svelte-kit/cloudflare",
     "update": "npm run build && wrangler pages deploy .svelte-kit/cloudflare",
     "cf-typegen": "wrangler types ./src/worker-configuration.d.ts",
-    "test": "node --test scripts/changelog.test.mjs scripts/backup.test.mjs",
+    "test": "node --test scripts/changelog.test.mjs scripts/backup.test.mjs scripts/analytics.test.mjs",
     "changelog": "node scripts/changelog.mjs"
   },
   "devDependencies": {
