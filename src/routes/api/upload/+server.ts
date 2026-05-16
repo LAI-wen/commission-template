@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid"
 import { validateArtistSession } from "$lib/auth"
 import { getCreator } from "$lib/db"
+import { incrementImageStats } from "$lib/analytics"
 import type { RequestHandler } from "./$types"
 
 export const POST: RequestHandler = async ({ request, platform }) => {
@@ -54,6 +55,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
   await env.R2.put(key, file.stream(), {
     httpMetadata: { contentType: file.type || "application/octet-stream" },
   })
+
+  if (env.KV) {
+    platform!.ctx.waitUntil(incrementImageStats(env.KV, file.size))
+  }
 
   const url = `${env.ORIGIN}/api/assets/${key}`
   return Response.json({ url, key })
