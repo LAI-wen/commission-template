@@ -844,3 +844,34 @@ export async function getActiveCommissionCount(db: D1Database): Promise<number> 
     .first<{ cnt: number }>()
   return row?.cnt ?? 0
 }
+
+export async function getReactionCounts(db: D1Database): Promise<Record<string, number[]>> {
+  const { results } = await db
+    .prepare("SELECT block_id, emoji_index, count FROM page_reactions")
+    .all<{ block_id: string; emoji_index: number; count: number }>()
+  const out: Record<string, number[]> = {}
+  for (const row of results ?? []) {
+    if (!out[row.block_id]) out[row.block_id] = []
+    out[row.block_id][row.emoji_index] = row.count
+  }
+  return out
+}
+
+export async function upsertReaction(
+  db: D1Database,
+  blockId: string,
+  emojiIndex: number,
+  delta: number
+): Promise<number> {
+  await db.batch([
+    db.prepare("INSERT OR IGNORE INTO page_reactions (block_id, emoji_index, count) VALUES (?, ?, 0)")
+      .bind(blockId, emojiIndex),
+    db.prepare("UPDATE page_reactions SET count = MAX(0, count + ?) WHERE block_id = ? AND emoji_index = ?")
+      .bind(delta, blockId, emojiIndex),
+  ])
+  const row = await db
+    .prepare("SELECT count FROM page_reactions WHERE block_id = ? AND emoji_index = ?")
+    .bind(blockId, emojiIndex)
+    .first<{ count: number }>()
+  return row?.count ?? 0
+}

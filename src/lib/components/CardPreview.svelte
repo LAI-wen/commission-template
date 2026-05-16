@@ -96,18 +96,51 @@
   let reactionCounts = $state<Record<string, number[]>>({})
   let reactionVoted = $state<Record<string, number | null>>({})
 
+  $effect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('reaction_votes') ?? '{}')
+      reactionVoted = saved
+    } catch {}
+    fetch('/api/reactions')
+      .then(r => r.ok ? r.json() : {})
+      .then((data: Record<string, number[]>) => { reactionCounts = data })
+      .catch(() => {})
+  })
+
+  function apiReaction(blockId: string, emojiIndex: number, delta: number) {
+    fetch('/api/reactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ block_id: blockId, emoji_index: emojiIndex, delta }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then((res: { count: number } | null) => {
+        if (res == null) return
+        const updated = [...(reactionCounts[blockId] ?? [])]
+        updated[emojiIndex] = res.count
+        reactionCounts = { ...reactionCounts, [blockId]: updated }
+      })
+      .catch(() => {})
+  }
+
   function voteReaction(blockId: string, idx: number, total: number) {
     const prev = reactionVoted[blockId] ?? null
     const counts = [...(reactionCounts[blockId] ?? Array.from({ length: total }, () => 0))]
     if (prev === idx) {
       counts[idx] = Math.max(0, counts[idx] - 1)
       reactionVoted = { ...reactionVoted, [blockId]: null }
+      apiReaction(blockId, idx, -1)
     } else {
-      if (prev !== null && prev < counts.length) counts[prev] = Math.max(0, counts[prev] - 1)
+      if (prev !== null && prev < counts.length) {
+        counts[prev] = Math.max(0, counts[prev] - 1)
+        apiReaction(blockId, prev, -1)
+      }
       counts[idx]++
       reactionVoted = { ...reactionVoted, [blockId]: idx }
+      apiReaction(blockId, idx, 1)
     }
     reactionCounts = { ...reactionCounts, [blockId]: counts }
+    try { localStorage.setItem('reaction_votes', JSON.stringify(reactionVoted)) } catch {}
   }
 
   function outerStyle(block: Block): string {
