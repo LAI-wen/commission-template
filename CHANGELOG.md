@@ -1,3 +1,12 @@
+## v2026-05-16.3
+
+### ✨ 新功能
+- 移除表符、改用純文字排版
+
+### 📝 其他
+- update CHANGELOG.md [skip ci]
+
+<!-- changelog-hash: 2dab5892e5dba035c1f5dfa4e95e1c27a1bb9b5f -->
 ## v2026-05-16.2
 
 ### ✨ 新功能
