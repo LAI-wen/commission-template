@@ -22,7 +22,10 @@ export function filterConventionalCommits(commits) {
   return commits.flatMap(commit => {
     const match = commit.message.match(pattern)
     if (!match) return []
-    return [{ ...commit, type: match[1], description: match[3] }]
+    const raw = match[3]
+    const pipeIdx = raw.indexOf(' | ')
+    const description = pipeIdx !== -1 ? raw.slice(pipeIdx + 3) : raw
+    return [{ ...commit, type: match[1], description }]
   })
 }
 

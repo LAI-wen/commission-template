@@ -32,6 +32,18 @@ test('parseCommits returns empty array for empty input', () => {
   assert.deepEqual(parseCommits(''), [])
 })
 
+test('filterConventionalCommits uses Chinese description after pipe separator', () => {
+  const commits = [
+    { hash: 'a', message: 'feat: add auto-compress | 自動壓縮圖片上傳' },
+    { hash: 'b', message: 'fix: z-index issue | 修復背景層蓋住側欄' },
+    { hash: 'c', message: 'feat: plain english only' },
+  ]
+  const result = filterConventionalCommits(commits)
+  assert.equal(result[0].description, '自動壓縮圖片上傳')
+  assert.equal(result[1].description, '修復背景層蓋住側欄')
+  assert.equal(result[2].description, 'plain english only')
+})
+
 test('filterConventionalCommits keeps feat/fix/docs/chore/refactor/perf', () => {
   const commits = [
     { hash: 'a', message: 'feat: new thing' },
