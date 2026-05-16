@@ -5,6 +5,7 @@
   import type { GlobalDesign } from './globalDesign'
   import type { CommissionType } from '$lib/db'
   import { compressForUpload } from '$lib/utils/image-compress'
+  import { beforeNavigate } from '$app/navigation'
 
   type StyleMap = {
     bgColor?: string; textColor?: string; borderColor?: string
@@ -100,6 +101,20 @@
       ? ((selBlock.data.cols ?? []) as any[][])[selectedInner.colIndex]?.find((b: any) => b.id === selectedInner!.blockId) ?? null
       : null
   )
+
+  beforeNavigate(({ cancel }) => {
+    if (isDirty && !confirm('有未儲存的變更，確定要離開嗎？')) {
+      cancel()
+    }
+  })
+
+  $effect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirty) e.preventDefault()
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  })
 
   // ── 初始化 / 倒計時 ──
   $effect(() => {
