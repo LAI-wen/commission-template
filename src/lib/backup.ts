@@ -41,7 +41,7 @@ export function guessContentType(filename: string): string {
   return map[ext] ?? 'application/octet-stream'
 }
 
-/** 查詢所有 D1 資料（不含 resend_api_key） */
+/** 查詢所有 D1 資料（不含 resend_api_key / hub_token） */
 export async function collectD1Data(db: D1Database): Promise<BackupData> {
   const [
     creator,
@@ -54,7 +54,7 @@ export async function collectD1Data(db: D1Database): Promise<BackupData> {
     db.prepare(`
       SELECT id, display_name, bio, avatar_url, styles,
              contact_email, contact_discord, contact_other,
-             is_open, open_note, queue_limit, hub_token, created_at,
+             is_open, open_note, queue_limit, created_at,
              page_config, open_status, next_open, process_config,
              site_url, email_mode, resend_from, notify_client_message_email
       FROM creators WHERE id = 'main'
@@ -214,14 +214,14 @@ export async function restoreToD1(
       INSERT INTO creators
         (id, display_name, bio, avatar_url, styles,
          contact_email, contact_discord, contact_other,
-         is_open, open_note, queue_limit, hub_token, created_at,
+         is_open, open_note, queue_limit, created_at,
          page_config, open_status, next_open, process_config,
          site_url, email_mode, resend_from, notify_client_message_email)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `).bind(
       c.id, c.display_name, c.bio ?? null, c.avatar_url ?? null, c.styles ?? null,
       c.contact_email ?? null, c.contact_discord ?? null, c.contact_other ?? null,
-      c.is_open ?? 0, c.open_note ?? null, c.queue_limit ?? 10, c.hub_token ?? null,
+      c.is_open ?? 0, c.open_note ?? null, c.queue_limit ?? 10,
       c.created_at, c.page_config ?? null, c.open_status ?? 'open',
       c.next_open ?? null, c.process_config ?? null,
       c.site_url ?? null, c.email_mode ?? 'none',
