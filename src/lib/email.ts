@@ -123,7 +123,11 @@ async function dispatch(
   const mode = creator.email_mode as string
 
   if (mode === "resend" && creator.resend_api_key) {
-    await sendViaResend(creator.resend_api_key as string, payload)
+    await sendViaResend(
+      creator.resend_api_key as string,
+      (creator.resend_from as string | null) || "onboarding@resend.dev",
+      payload
+    )
     return
   }
 
@@ -139,7 +143,7 @@ async function dispatch(
   }
 }
 
-async function sendViaResend(apiKey: string, payload: EmailPayload) {
+async function sendViaResend(apiKey: string, fromAddress: string, payload: EmailPayload) {
   let to: string, subject: string, html: string
 
   if (payload.type === "new_commission") {
@@ -210,7 +214,7 @@ async function sendViaResend(apiKey: string, payload: EmailPayload) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "onboarding@resend.dev",
+      from: fromAddress,
       to,
       subject,
       html,
