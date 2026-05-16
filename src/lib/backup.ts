@@ -36,6 +36,7 @@ export function guessContentType(filename: string): string {
   const map: Record<string, string> = {
     webp: 'image/webp', jpg: 'image/jpeg', jpeg: 'image/jpeg',
     png: 'image/png', gif: 'image/gif',
+    svg: 'image/svg+xml', avif: 'image/avif',
   }
   return map[ext] ?? 'application/octet-stream'
 }
@@ -135,7 +136,11 @@ export function parseZipBuffer(buffer: Uint8Array): ParsedZip {
 
   const p = (name: string): unknown[] => {
     const raw = files[`data/${name}.json`]
-    return raw ? JSON.parse(dec.decode(raw)) : []
+    if (!raw) {
+      console.warn(`[backup] data/${name}.json not found in ZIP (schema_version=${manifest.schema_version})`)
+      return []
+    }
+    return JSON.parse(dec.decode(raw))
   }
   const creatorRaw = files['data/creator.json']
   const creator = creatorRaw ? JSON.parse(dec.decode(creatorRaw)) : null
@@ -199,7 +204,7 @@ export async function restoreToD1(
     for (let i = 0; i < rows.length; i += CHUNK) {
       await db.batch(rows.slice(i, i + CHUNK).map(make))
     }
-    stats[table] = rows.length
+    stats[table] = rows.length  // only reached if all chunks succeeded
   }
 
   // 插入順序：父表先於子表
