@@ -1,3 +1,12 @@
+## v2026-05-16.2
+
+### ✨ 新功能
+- 支援中文備註格式
+
+### 📝 其他
+- update CHANGELOG.md [skip ci]
+
+<!-- changelog-hash: 67ae49139394d861778dd32cf2a5c1bdaa9962f6 -->
 ## v2026-05-16.1
 
 ### 🐛 修復
