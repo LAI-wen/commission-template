@@ -74,6 +74,11 @@
   let selectedInner = $state<{ colIndex: number; blockId: string } | null>(null)
   let addingToCol   = $state<number | null>(null)
 
+  let savedSnapshot = $state('')
+  const isDirty = $derived(
+    JSON.stringify({ blocks, overrides, globalDesign }) !== savedSnapshot
+  )
+
   let selBlock = $derived(blocks.find(b => b.id === selectedId) ?? null)
   const selInnerBlock = $derived(
     selectedInner && selBlock?.type === 'columns'
@@ -99,6 +104,7 @@
         if (sg) globalDesign = { ...DEFAULT_GLOBAL, ...JSON.parse(sg) }
       }
     } catch {}
+    savedSnapshot = JSON.stringify({ blocks, overrides, globalDesign })
     const iv = setInterval(() => cdTick++, 1000)
     return () => clearInterval(iv)
   })
@@ -375,6 +381,7 @@
       })
         .then(res => {
           if (!res.ok) throw new Error('Save failed')
+          savedSnapshot = JSON.stringify({ blocks, overrides, globalDesign })
           toast('✓ 已儲存到服務器')
           // 觸發頁面更新，使首頁可以讀取新的配置
           window.dispatchEvent(new CustomEvent('cardConfigUpdated', { detail: config }))
