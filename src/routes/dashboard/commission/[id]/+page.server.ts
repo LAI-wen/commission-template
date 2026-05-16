@@ -1,6 +1,6 @@
 import { error, fail } from "@sveltejs/kit"
 import type { PageServerLoad, Actions } from "./$types"
-import { getCommission, updateCommissionStatus, getRevisions, createRevision, addRevisionComment, getRevisionComments, getCommissionTypeWithOptions, getCommissionDiscussion, updateCommissionDiscussion, getCommissionMessages, addCommissionMessage } from "$lib/db"
+import { getCommission, updateCommissionStatus, getRevisions, createRevision, addRevisionComment, getRevisionComments, getRevisionCommentsByCommission, getCommissionTypeWithOptions, getCommissionDiscussion, updateCommissionDiscussion, getCommissionMessages, addCommissionMessage } from "$lib/db"
 import { sendCommissionStatusEmail, sendDiscussionMessageEmail } from "$lib/email"
 import { nanoid } from "nanoid"
 
@@ -10,19 +10,24 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 
   if (!commission) throw error(404, "找不到此委託")
 
-  const [revisionsResult, typeResult, discussionResult, messagesResult] = await Promise.all([
+  const [revisionsResult, typeResult, discussionResult, messagesResult, allComments] = await Promise.all([
     getRevisions(db, params.id),
     getCommissionTypeWithOptions(db, commission.type_id || ""),
     getCommissionDiscussion(db, params.id),
     getCommissionMessages(db, params.id),
+    getRevisionCommentsByCommission(db, params.id),
   ])
 
-  const revisionsWithComments = await Promise.all(
-    revisionsResult.results.map(async (rev: any) => {
-      const comments = await getRevisionComments(db, rev.id)
-      return { ...rev, comments: comments.results }
-    })
-  )
+  const commentsByVersionId = new Map<string, any[]>()
+  for (const c of allComments.results as any[]) {
+    const arr = commentsByVersionId.get(c.version_id) ?? []
+    arr.push(c)
+    commentsByVersionId.set(c.version_id, arr)
+  }
+  const revisionsWithComments = revisionsResult.results.map((rev: any) => ({
+    ...rev,
+    comments: commentsByVersionId.get(rev.id) ?? [],
+  }))
 
   return {
     commission,

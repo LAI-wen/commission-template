@@ -340,6 +340,18 @@ export async function getRevisionComments(db: D1Database, versionId: string) {
     .all()
 }
 
+export async function getRevisionCommentsByCommission(db: D1Database, commissionId: string) {
+  return db
+    .prepare(
+      `SELECT rc.* FROM revision_comments rc
+       JOIN revision_versions rv ON rc.version_id = rv.id
+       WHERE rv.commission_id = ?
+       ORDER BY rc.created_at ASC`
+    )
+    .bind(commissionId)
+    .all()
+}
+
 export async function addRevisionComment(
   db: D1Database,
   versionId: string,
