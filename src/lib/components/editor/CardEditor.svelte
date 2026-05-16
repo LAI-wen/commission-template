@@ -1,5 +1,6 @@
 <script lang="ts">
   import { marked } from 'marked'
+  import { untrack } from 'svelte'
   import GlobalDesignPanel from './GlobalDesignPanel.svelte'
   import { DEFAULT_GLOBAL } from './globalDesign'
   import type { GlobalDesign } from './globalDesign'
@@ -142,7 +143,7 @@
         }
       }
     } catch {}
-    savedSnapshot = JSON.stringify({ blocks, overrides, globalDesign })
+    savedSnapshot = untrack(() => JSON.stringify({ blocks, overrides, globalDesign }))
     const iv = setInterval(() => cdTick++, 1000)
     return () => clearInterval(iv)
   })
