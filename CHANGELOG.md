@@ -1,3 +1,12 @@
+## v2026-05-16.5
+
+### ✨ 新功能
+- add new block types (notice, social, faq, terms, pricing, reactions) to card editor and preview
+
+### 📝 其他
+- update CHANGELOG.md [skip ci]
+
+<!-- changelog-hash: f7397cd2396011a84d25337f7b4550cb54398c50 -->
 ## v2026-05-16.4
 
 ### ✨ 新功能
