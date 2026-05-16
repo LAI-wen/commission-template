@@ -19,8 +19,11 @@ export type GlobalDesign = {
   borderWidth: string
   borderStyle: string
   radius: string
-  // Palette
+  // Editor block palette
   palette: string[]
+  // Site-wide theme (synced to DB for public page)
+  themePalette: string
+  themeCustomColors: string[]
   // Layout
   layoutWidth: 'narrow' | 'full'
 }
@@ -45,5 +48,7 @@ export const DEFAULT_GLOBAL: GlobalDesign = {
   borderStyle: 'double',
   radius: '32px',
   palette: ['var(--ink)', 'var(--blue)', 'var(--cream)', 'var(--lavender)', '#ffffff'],
+  themePalette: 'blue',
+  themeCustomColors: ['#276CE4', '#E33D2C', '#FBF9F5', '#D0C5F4'],
   layoutWidth: 'narrow',
 }

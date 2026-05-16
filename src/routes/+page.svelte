@@ -3,6 +3,8 @@
   import CardPreview from "$lib/components/CardPreview.svelte"
   import { DEFAULT_GLOBAL } from "$lib/components/editor/globalDesign"
   import type { GlobalDesign } from "$lib/components/editor/globalDesign"
+  import { PALETTES, buildCustomVars } from "$lib/theme"
+  import type { CustomColors } from "$lib/theme"
 
   let { data }: { data: PageData } = $props()
 
@@ -23,6 +25,11 @@
   const editorOverrides = serverConfig?.overrides ?? {}
   const editorGlobal   = { ...DEFAULT_GLOBAL, ...(serverConfig?.globalDesign ?? {}) } as GlobalDesign
   const hasConfig = !!serverConfig
+
+  const paletteVars = editorGlobal.themePalette === 'custom'
+    ? buildCustomVars(editorGlobal.themeCustomColors as CustomColors)
+    : (PALETTES[editorGlobal.themePalette as keyof typeof PALETTES]?.vars ?? PALETTES.blue.vars)
+  const themeStyle = ':root{' + Object.entries(paletteVars).map(([k, v]) => `${k}:${v}`).join(';') + '}'
 
   const pageBgStyle = $derived(
     [
@@ -53,6 +60,7 @@
 
 <svelte:head>
   <title>{displayName()}</title>
+  {@html `<style>${themeStyle}</style>`}
   {#if editorGlobal.fontUrl}
     <link rel="stylesheet" href={editorGlobal.fontUrl} />
   {/if}
