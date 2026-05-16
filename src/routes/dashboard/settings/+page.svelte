@@ -80,6 +80,12 @@
 
   /* ── Layout form (hidden submit) ─────────────── */
   let layoutFormEl: HTMLFormElement
+
+  /* ── Email settings ─────────────────────────── */
+  let emailMode    = $state<string>(data.emailMode ?? 'none')
+  let resendApiKey = $state<string>(data.resendApiKey ?? '')
+  let resendFrom   = $state<string>(data.resendFrom ?? '')
+  let showApiKey   = $state(false)
 </script>
 
 <div class="page">
@@ -264,6 +270,84 @@
       </div>
     </form>
   </section>
+
+  <!-- ══ Email 通知設定 ══════════════════════════════════ -->
+  <section class="section email-section">
+    <div class="section-head">
+      <h2 class="section-title">Email 通知設定</h2>
+      <p class="section-sub">設定委託申請、狀態更新等通知信的寄送方式。</p>
+    </div>
+
+    <form method="POST" action="?/saveEmail" class="email-form" use:enhance>
+      <div class="email-field">
+        <label for="email_mode">寄信模式</label>
+        <select id="email_mode" name="email_mode" bind:value={emailMode}>
+          <option value="none">停用</option>
+          <option value="hub">Hub 聚合</option>
+          <option value="resend">自己的 Resend</option>
+        </select>
+        {#if emailMode === 'hub'}
+          <span class="field-hint">使用 commission-hub 共用寄信配額，每月上限視 Hub 方案而定。</span>
+        {/if}
+      </div>
+
+      {#if emailMode === 'resend'}
+        <div class="email-field">
+          <label for="resend_api_key">API Key</label>
+          <div class="api-key-wrap">
+            <input id="resend_api_key" name="resend_api_key"
+              type={showApiKey ? "text" : "password"}
+              placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxx"
+              bind:value={resendApiKey}
+              spellcheck="false" autocomplete="off" />
+            <button type="button" class="toggle-key" onclick={() => showApiKey = !showApiKey}>
+              {showApiKey ? "隱藏" : "顯示"}
+            </button>
+          </div>
+        </div>
+
+        <div class="email-field">
+          <label for="resend_from">寄件地址</label>
+          <input id="resend_from" name="resend_from"
+            type="text"
+            placeholder="noreply@yourdomain.com"
+            bind:value={resendFrom}
+            spellcheck="false" autocomplete="off" />
+          <span class="field-hint">留空時自動使用 Resend 免費子網域（onboarding@resend.dev）</span>
+        </div>
+
+        <div class="email-tutorial">
+          <div class="tutorial-section">
+            <div class="tutorial-title">快速開始：申請 Resend 免費帳號</div>
+            <ol>
+              <li>到 <a href="https://resend.com" target="_blank" rel="noopener">resend.com</a> 建立免費帳號（每月 3,000 封，每日 100 封）</li>
+              <li>進入 <strong>API Keys</strong> → <strong>Create API Key</strong>，複製產生的 key</li>
+              <li>貼到上方 API Key 欄位，寄件地址留空，儲存即可立即寄信</li>
+            </ol>
+          </div>
+          <div class="tutorial-section">
+            <div class="tutorial-title">進階：使用自訂網域（更專業的寄件地址）</div>
+            <ol>
+              <li>Resend 後台 → <strong>Domains</strong> → <strong>Add Domain</strong>，輸入你的網域</li>
+              <li>按指示在你的網域 DNS 新增 SPF、DKIM 驗證記錄，等待驗證通過（約 5–10 分鐘）</li>
+              <li>驗證後，寄件地址填入 <code>noreply@your-domain.com</code> 即可使用自訂地址</li>
+            </ol>
+          </div>
+        </div>
+      {/if}
+
+      {#if form?.emailError}
+        <span class="field-error">{form.emailError}</span>
+      {/if}
+
+      <div class="email-actions">
+        <button type="submit" class="btn-hub">儲存 Email 設定</button>
+        {#if form?.emailSaved}
+          <span class="hub-saved">✓ 已儲存</span>
+        {/if}
+      </div>
+    </form>
+  </section>
 </div>
 
 <style>
@@ -414,6 +498,26 @@
   .btn-hub { padding: 0.45rem 1.1rem; background: var(--blue); color: var(--white); border: 2px solid var(--blue-deep, #1747BB); font-family: var(--font-body); font-size: 0.875rem; font-weight: 700; cursor: pointer; box-shadow: var(--shadow-sm); transition: transform 0.08s, box-shadow 0.08s; }
   .btn-hub:hover { transform: translate(-1px,-1px); box-shadow: var(--shadow-md); }
   .hub-saved { font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700; color: #16a34a; }
+
+  /* ── Email ── */
+  .email-section { border: var(--border); box-shadow: var(--shadow-md); }
+  .email-form { display: flex; flex-direction: column; gap: 1rem; }
+  .email-field { display: flex; flex-direction: column; gap: 0.35rem; }
+  .email-field label { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-text-tertiary); }
+  .email-field input, .email-field select { padding: 0.55rem 0.75rem; border: var(--border); font-family: var(--font-mono); font-size: 0.82rem; background: var(--white); color: var(--ink); width: 100%; box-sizing: border-box; }
+  .email-field input:focus, .email-field select:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+  .api-key-wrap { display: flex; }
+  .api-key-wrap input { flex: 1; }
+  .toggle-key { padding: 0.55rem 0.75rem; border: var(--border); border-left: none; background: var(--color-background-secondary, #f5f5f5); font-family: var(--font-mono); font-size: 0.75rem; cursor: pointer; color: var(--color-text-secondary); white-space: nowrap; }
+  .toggle-key:hover { background: var(--color-background-primary, #fff); }
+  .email-tutorial { background: color-mix(in srgb, var(--blue) 4%, transparent); border: 1px solid color-mix(in srgb, var(--blue) 20%, transparent); border-radius: var(--border-radius-md); padding: 1rem; display: flex; flex-direction: column; gap: 0.875rem; }
+  .tutorial-section { display: flex; flex-direction: column; gap: 0.4rem; }
+  .tutorial-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-secondary); }
+  .tutorial-section ol { margin: 0; padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.25rem; }
+  .tutorial-section li { font-size: 0.8rem; color: var(--color-text-secondary); line-height: 1.5; }
+  .tutorial-section a { color: var(--blue); }
+  .tutorial-section code { font-family: var(--font-mono); font-size: 0.75rem; background: rgba(0,0,0,0.06); padding: 0 3px; border-radius: 2px; }
+  .email-actions { display: flex; align-items: center; gap: 1rem; }
 
   @media (max-width: 800px) {
     .palette-grid { grid-template-columns: repeat(3, 1fr); }
