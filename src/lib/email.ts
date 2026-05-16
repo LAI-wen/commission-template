@@ -1,4 +1,5 @@
 import { getCreator } from "./db"
+import { incrementEmailCount } from "./analytics"
 
 type EmailPayload = {
   type: "new_commission" | "commission_status" | "discussion_message" | "artist_discussion_message"
@@ -121,6 +122,7 @@ async function dispatch(
   payload: EmailPayload
 ) {
   const mode = creator.email_mode as string
+  let sent = false
 
   if (mode === "resend" && creator.resend_api_key) {
     await sendViaResend(
@@ -128,10 +130,8 @@ async function dispatch(
       (creator.resend_from as string | null) || "onboarding@resend.dev",
       payload
     )
-    return
-  }
-
-  if (mode === "hub" && env.HUB_URL && creator.hub_token) {
+    sent = true
+  } else if (mode === "hub" && env.HUB_URL && creator.hub_token) {
     await fetch(`${env.HUB_URL}/api/email`, {
       method: "POST",
       headers: {
@@ -140,6 +140,11 @@ async function dispatch(
       },
       body: JSON.stringify(payload),
     }).catch(e => console.error("Hub relay error:", e))
+    sent = true
+  }
+
+  if (sent && env.KV) {
+    await incrementEmailCount(env.KV)
   }
 }
 
