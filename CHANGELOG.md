@@ -1,3 +1,12 @@
+## v2026-05-16.1
+
+### 🐛 修復
+- unify localStorage draft keys, card_draft takes priority on load
+
+### 📝 其他
+- update CHANGELOG.md [skip ci]
+
+<!-- changelog-hash: 910b049a3cd56fd3b03590ce0cb50d98db47ad81 -->
 ## v2026-05-16
 
 ### ✨ 新功能
