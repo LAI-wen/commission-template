@@ -538,7 +538,7 @@
             </div>
 
           {:else if block.type === 'image'}
-            {@const imgW = block.data.width === 'small' ? '40%' : block.data.width === 'medium' ? '70%' : '100%'}
+            {@const imgW = block.data.width === '1/4' ? '25%' : block.data.width === '1/2' ? '50%' : block.data.width === '3/4' ? '75%' : '100%'}
             {@const imgJ = block.data.align === 'left' ? 'flex-start' : block.data.align === 'right' ? 'flex-end' : 'center'}
             <div style="display:flex;justify-content:{imgJ};overflow:hidden;border-radius:{s.radius};">
               <img src={block.data.src} alt={block.data.alt ?? ''} style="width:{imgW};height:auto;object-fit:cover;display:block;border-radius:{s.radius};" />
@@ -660,6 +660,58 @@
                 </div>
               {/each}
             </div>
+
+          {:else if block.type === 'notice'}
+            <div class="notice-preview notice-{block.data.type ?? 'info'}">
+              <span>{block.data.type === 'warn' ? '⚠' : block.data.type === 'error' ? '✕' : 'ℹ'}</span>
+              <span>{block.data.content ?? ''}</span>
+            </div>
+
+          {:else if block.type === 'social'}
+            <div style="display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;padding:.5rem;">
+              {#each (block.data.links ?? []) as link}
+                <span style="padding:.375rem .875rem;border-radius:.5rem;font-size:.8rem;font-weight:700;{bg}">{link.platform}</span>
+              {/each}
+            </div>
+
+          {:else if block.type === 'faq'}
+            <div style="font-size:.85rem;">
+              {#each (block.data.items ?? []) as item}
+                <div style="padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.15);">
+                  <div style="font-weight:700;">{item.q}</div>
+                  <div style="opacity:.7;font-size:.8rem;margin-top:.25rem;">{item.a}</div>
+                </div>
+              {/each}
+            </div>
+
+          {:else if block.type === 'terms'}
+            <div>
+              <div style="font-weight:900;font-size:.85rem;margin-bottom:.5rem;">{block.data.title ?? '委託條款'}</div>
+              <div style="font-size:.75rem;opacity:.7;line-height:1.6;">{(block.data.content ?? '').slice(0, 120)}{(block.data.content ?? '').length > 120 ? '…' : ''}</div>
+            </div>
+
+          {:else if block.type === 'pricing'}
+            <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+              {#each (block.data.plans ?? []) as plan}
+                <div style="flex:1;min-width:100px;padding:.75rem;border-radius:.75rem;{bg}{plan.recommended ? 'outline:2px solid rgba(255,255,255,.4);' : ''}">
+                  <div style="font-weight:900;font-size:.85rem;">{plan.name}</div>
+                  <div style="font-size:1rem;font-weight:900;margin:.25rem 0;">{plan.price}</div>
+                </div>
+              {/each}
+            </div>
+
+          {:else if block.type === 'reactions'}
+            <div style="display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;">
+              {#each (block.data.emojis ?? []) as emoji}
+                <span style="padding:.4rem .75rem;border-radius:999px;border:1px solid rgba(255,255,255,.25);font-size:1.1rem;">{emoji}</span>
+              {/each}
+            </div>
+
+          {:else if block.type === 'divider'}
+            <hr style="border:none;border-top:{block.data.thickness ?? 1}px {block.data.style ?? 'solid'} currentColor;opacity:.35;margin:{block.data.spacing ?? 8}px 0;" />
+
+          {:else if block.type === 'spacer'}
+            <div style="height:{block.data.height ?? 32}px;display:flex;align-items:center;justify-content:center;opacity:.3;font-size:.7rem;font-family:var(--font-mono);">{block.data.height ?? 32}px 空白</div>
 
           {:else}
             <div class="generic-block" style={bg}>{block.type}</div>
@@ -1406,6 +1458,10 @@
   .queue-bar-fill { height: 100%; border-radius: 999px; background: rgba(255,255,255,.8); }
   .queue-remain { font-size: .75rem; opacity: .6; margin-top: .5rem; }
   .generic-block { padding: 1.25rem; text-align: center; font-size: .875rem; opacity: .6; }
+  .notice-preview { display: flex; align-items: center; gap: .625rem; padding: .625rem .875rem; border-radius: .75rem; font-size: .8rem; }
+  .notice-info { background: rgba(59,130,246,.15); border-left: 3px solid #3b82f6; }
+  .notice-warn { background: rgba(245,158,11,.15); border-left: 3px solid #f59e0b; }
+  .notice-error { background: rgba(239,68,68,.15); border-left: 3px solid #ef4444; }
 
   /* FABs */
   .fab-col { position: fixed; top: 6rem; right: 1.5rem; z-index: 60; display: flex; flex-direction: column; align-items: center; gap: 1rem; transition: right .22s cubic-bezier(.25,.46,.45,.94); }
