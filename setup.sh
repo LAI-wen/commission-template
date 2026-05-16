@@ -157,6 +157,11 @@ printf '%s' "$SESSION_SECRET" | npx wrangler pages secret put SESSION_SECRET \
   --project-name "$PROJECT_NAME"
 ok "密鑰設定完成"
 
+# ── 7. 重新部署（套用密鑰）────────────────────────────
+info "重新部署以套用密鑰..."
+npx wrangler pages deploy .svelte-kit/cloudflare --project-name "$PROJECT_NAME"
+ok "部署完成，密鑰已生效"
+
 # ── 完成 ─────────────────────────────────────────────
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
